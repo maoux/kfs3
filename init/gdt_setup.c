@@ -1,7 +1,7 @@
 #include <kfs/gdt.h>
 #include <string.h>
 
-static void		init_segment_descriptor(t_gdt_descriptor *descriptor,
+static void		segment_descriptor_init(t_gdt_descriptor *descriptor,
 								uint32_t base_addr, uint32_t limit,
 								uint8_t access, uint8_t flags)
 {
@@ -28,19 +28,19 @@ static void		init_segment_descriptor(t_gdt_descriptor *descriptor,
 	user stack:		access = 0xf6 <=> 0b1111 1010
 					flags = 0x0c
 */
-extern void		init_gdt(void)
+extern void		gdt_init(void)
 {
 	t_gdt_descriptor	*gdt = (t_gdt_descriptor *)GDT_BASE_ADDR;
 
-    init_segment_descriptor(&gdt[0], 0x0, 0x0, 0x0, 0x0);
+    segment_descriptor_init(&gdt[0], 0x0, 0x0, 0x0, 0x0);
 
-    init_segment_descriptor(&gdt[1], 0x0, 0xffffffff, 0x9a, 0x0c);
-    init_segment_descriptor(&gdt[2], 0x0, 0xffffffff, 0x92, 0x0c);
-    init_segment_descriptor(&gdt[3], 0x0, 0xffffffff, 0x96, 0x0c);
+    segment_descriptor_init(&gdt[1], 0x0, 0xffffffff, 0x9a, 0x0c);
+    segment_descriptor_init(&gdt[2], 0x0, 0xffffffff, 0x92, 0x0c);
+    segment_descriptor_init(&gdt[3], 0x0, 0xffffffff, 0x96, 0x0c);
 
-    init_segment_descriptor(&gdt[4], 0x0, 0xffffffff, 0xFa, 0x0c);
-    init_segment_descriptor(&gdt[5], 0x0, 0xffffffff, 0xF2, 0x0c);
-    init_segment_descriptor(&gdt[6], 0x0, 0xffffffff, 0xF6, 0x0c);
+    segment_descriptor_init(&gdt[4], 0x0, 0xffffffff, 0xFa, 0x0c);
+    segment_descriptor_init(&gdt[5], 0x0, 0xffffffff, 0xF2, 0x0c);
+    segment_descriptor_init(&gdt[6], 0x0, 0xffffffff, 0xF6, 0x0c);
 
     _GDTR.size = sizeof(gdt[0]) * GDT_SIZE;
     _GDTR.base_addr = GDT_BASE_ADDR;

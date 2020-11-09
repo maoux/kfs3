@@ -86,7 +86,7 @@ typedef struct gdt_descriptor	t_gdt_descriptor;
 /* Globals */
 t_gdtr					_GDTR;
 
-extern void		init_gdt(void);
+extern void		gdt_init(void);
 extern void		gdt_flush(void);
 
 #endif

@@ -5,6 +5,7 @@
 #include <kfs/shell.h>
 #include <kfs/gdt.h>
 #include <kfs/elf.h>
+#include <kfs/mem.h>
 
 extern void		kmain(uint32_t magic, uint32_t *meminfo_offset)
 {
@@ -16,8 +17,9 @@ extern void		kmain(uint32_t magic, uint32_t *meminfo_offset)
 		return ;
 	}
 
-	/* Setup GDT */
-	init_gdt();
+	/* Setup GDT and paging */
+	gdt_init();
+	paging_init();
 
 	/* Setup multiboot infos api */
 	grub_info_init(meminfo_offset);
@@ -36,6 +38,8 @@ extern void		kmain(uint32_t magic, uint32_t *meminfo_offset)
 		video_init((uint32_t *)0xb8000, 80, 25);
 	}
 	text_mode_intro_print();
+	printk(KERN_INFO "GDT Setup done\n");
+	printk(KERN_INFO "Paging enabled\n");
 
 	if (debug) {
 		grub_meminfo_print(grub_info);
