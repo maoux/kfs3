@@ -19,24 +19,14 @@ extern void		kmain(uint32_t magic, uint32_t *meminfo_offset)
 
 	/* Setup GDT and paging */
 	gdt_init();
-	paging_init();
+	//paging_init();
 
 	/* Setup multiboot infos api */
 	grub_info_init(meminfo_offset);
 
 	/* Init text mode params with multiboot specs if available */
 	grub_info = (t_grub_info *)meminfo_offset;
-	if (IS_GFLAG(grub_info->flags, GFLAG_FRAMEBUFFER)) {
-		video_init((uint32_t *)grub_info->framebuffer_addr_low,
-		grub_info->framebuffer_width, grub_info->framebuffer_height);
-	}
-	else {
-		/*
-			assume video buffer is on location 0xb8000 for now
-			with standard text mode size
-		*/
-		video_init((uint32_t *)0xb8000, 80, 25);
-	}
+	video_init((uint32_t *)0xC00B8000, 80, 25);
 	text_mode_intro_print();
 	printk(KERN_INFO "GDT Setup done\n");
 	printk(KERN_INFO "Paging enabled\n");

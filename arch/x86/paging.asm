@@ -8,6 +8,7 @@ paging_enable:
 	mov cr3, eax
 	mov eax, cr0
 	or eax, 0x80000001 ; set paging bit in cr0
+	mov cr0, eax
 	mov esp, ebp
 	pop ebp
 	ret

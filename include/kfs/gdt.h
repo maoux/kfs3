@@ -3,7 +3,7 @@
 
 # include <stdint.h>
 
-# define GDT_BASE_ADDR	0x00000800
+# define GDT_BASE_ADDR	(0x00000800 + 0xC0000000)
 # define GDT_SIZE		07
 
 struct gdtr {

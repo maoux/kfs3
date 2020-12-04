@@ -62,7 +62,7 @@ extern void		grub_meminfo_print(t_grub_info *grub_info)
 
 		while ((uint32_t)mmap < grub_info->mmap_addr + grub_info->mmap_length) {
 		 	printk(KERN_DEBUG "mmap struct size: %d\n", mmap->size);
-		 	printk(KERN_DEBUG "mmap: base addr %#016x:%016x\n - length %u:%u - type %hd\n",
+		 	printk(KERN_DEBUG "mmap: base addr %#08x:%08x\n - length %u:%u - type %hd\n",
 			 		mmap->base_addr_high, mmap->base_addr_low,
 					mmap->length_high, mmap->length_low, mmap->type);
 		 	mmap = (t_mmap *)((uint32_t)mmap + mmap->size + sizeof(uint32_t));
