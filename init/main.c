@@ -9,30 +9,29 @@
 
 extern void		kmain(uint32_t magic, uint32_t *meminfo_offset)
 {
-	uint8_t		debug = 0;
-	t_grub_info	*grub_info;
-
+	uint8_t		debug = 1;
 
 	if (magic != 0x2badb002) {
 		return ;
 	}
 
-	/* Setup GDT and paging */
-	gdt_init();
-	//paging_init();
-
-	/* Setup multiboot infos api */
-	grub_info_init(meminfo_offset);
-
-	/* Init text mode params with multiboot specs if available */
-	grub_info = (t_grub_info *)meminfo_offset;
+	/* Setup GDT and vga text mode array */
 	video_init((uint32_t *)0xC00B8000, 80, 25);
 	text_mode_intro_print();
-	printk(KERN_INFO "GDT Setup done\n");
 	printk(KERN_INFO "Paging enabled\n");
+	gdt_init();
+	printk(KERN_INFO "GDT Setup done\n");
+
+	/* Setup multiboot infos api and use it to setup physical memory management */
+	grub_info_init((uint32_t *)((uint32_t)meminfo_offset + KERNEL_SPACE_V_ADDR));
+	if (pmm_init() == 0) {
+		printk(KERN_INFO "Physical Memory Manager Setup done\n");
+	} else {
+		printk(KERN_ERR "Physical Memory Manager Setup failed\n");
+	}
 
 	if (debug) {
-		grub_meminfo_print(grub_info);
+		grub_meminfo_print();
 	}
 
 	/* keyboard test and infinite loop (break it with esc key)*/

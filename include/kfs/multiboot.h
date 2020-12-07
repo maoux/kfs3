@@ -116,6 +116,12 @@ struct grub_info {
 };
 typedef struct grub_info	t_grub_info;
 
+# define AVAILABLE_MEMORY	0x01
+# define UNAVAILABLE_MEMORY	0x02
+# define ACPI_MEMORY		0x03
+# define RESERVED_MEMORY	0x04
+# define DEFECTIVE_MEMORY	0x05
+
 # define GFLAG_MEMINFO		1 << 0
 # define GFLAG_DEVICES		1 << 1
 # define GFLAG_CMDLINE		1 << 2
@@ -132,8 +138,9 @@ typedef struct grub_info	t_grub_info;
 
 # define IS_GFLAG(x, y) x & (y)
 
-extern void		grub_meminfo_print(t_grub_info *grub_info);
-extern void		grub_info_init(uint32_t	*addr);
+extern void			grub_meminfo_print(void);
+extern void			grub_info_init(uint32_t	*addr);
+extern t_grub_info	*grub_info_get(void);
 
 extern t_hdrt_info	*hdrt_info_get(void);
 

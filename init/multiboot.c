@@ -1,9 +1,10 @@
 #include <kfs/kernel.h>
 #include <kfs/multiboot.h>
+#include <kfs/mem.h>
 
 t_grub_info		*grub_info;
 
-extern void		grub_meminfo_print(t_grub_info *grub_info)
+extern void		grub_meminfo_print(void)
 {
 	t_palette_color_info	*palette;
 	t_color					*color;
@@ -25,7 +26,7 @@ extern void		grub_meminfo_print(t_grub_info *grub_info)
 	}
 	if (IS_GFLAG(flags, GFLAG_CMDLINE)) {
 		if (grub_info->cmdline) {
-			printk(KERN_DEBUG "cmdline :\t%s\n", grub_info->cmdline);
+			printk(KERN_DEBUG "cmdline :\t%s\n", (char *)((uint32_t)grub_info->cmdline + KERNEL_SPACE_V_ADDR));
 		}
 	}
 	if (IS_GFLAG(flags, GFLAG_FMTAOUT)) {
@@ -35,7 +36,7 @@ extern void		grub_meminfo_print(t_grub_info *grub_info)
 		printk(KERN_DEBUG "elf hdr table addr :\t%010#x\n", grub_info->fmt_info.elf_hdr_table_info.addr);
 	}
 	if (IS_GFLAG(flags, GFLAG_NAME)) {
-		printk(KERN_DEBUG "bootloader name :\t%s\n", grub_info->bootloader_name);
+		printk(KERN_DEBUG "bootloader name :\t%s\n",(char *)((uint32_t)grub_info->bootloader_name + KERNEL_SPACE_V_ADDR));
 	}
 	if (IS_GFLAG(flags, GFLAG_FRAMEBUFFER)) {
 		printk(KERN_DEBUG "bootloader framebuffer addr:\t%#010x\n", grub_info->framebuffer_addr_low);
@@ -56,15 +57,15 @@ extern void		grub_meminfo_print(t_grub_info *grub_info)
 		}
 	}
 	if (IS_GFLAG(flags, GFLAG_MMAP)) {
-		mmap = (t_mmap *)grub_info->mmap_addr;
+		mmap = (t_mmap *)((uint32_t)grub_info->mmap_addr + KERNEL_SPACE_V_ADDR);
 		printk(KERN_DEBUG "mmap addr : %010#x\n", mmap);
 		printk(KERN_DEBUG "mmap addr : %d\n", grub_info->mmap_length);
 
-		while ((uint32_t)mmap < grub_info->mmap_addr + grub_info->mmap_length) {
-		 	printk(KERN_DEBUG "mmap struct size: %d\n", mmap->size);
-		 	printk(KERN_DEBUG "mmap: base addr %#08x:%08x\n - length %u:%u - type %hd\n",
-			 		mmap->base_addr_high, mmap->base_addr_low,
-					mmap->length_high, mmap->length_low, mmap->type);
+		while ((uint32_t)mmap < (uint32_t)grub_info->mmap_addr + KERNEL_SPACE_V_ADDR + grub_info->mmap_length) {
+		 	// printk(KERN_DEBUG "mmap struct size: %d\n", mmap->size);
+		 	// printk(KERN_DEBUG "mmap: base addr %#08x:%08x\n - length %u:%u - type %hd\n",
+			//  		mmap->base_addr_high, mmap->base_addr_low,
+			// 		mmap->length_high, mmap->length_low, mmap->type);
 		 	mmap = (t_mmap *)((uint32_t)mmap + mmap->size + sizeof(uint32_t));
 		}
 	}
@@ -80,7 +81,12 @@ extern t_hdrt_info	*hdrt_info_get(void)
 	return (NULL);
 }
 
-extern void		grub_info_init(uint32_t	*addr)
+extern t_grub_info	*grub_info_get(void)
+{
+	return (grub_info);
+}
+
+extern void			grub_info_init(uint32_t	*addr)
 {
 	if (addr) {
 		grub_info = (t_grub_info *)addr;

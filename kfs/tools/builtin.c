@@ -5,6 +5,7 @@
 #include <kfs/elf.h>
 #include <kfs/io.h>
 #include <stdlib.h>
+#include <kfs/mem.h>
 
 static char		*get_symbol_elf32(uint32_t addr);
 
@@ -40,18 +41,18 @@ static char		*get_symbol_elf32(uint32_t addr)
 
 	mbi_hdr = hdrt_info_get();
 	if (mbi_hdr) {
-		shdr_cur = (t_Elf32_Shdr *)(mbi_hdr->addr);
+		shdr_cur = (t_Elf32_Shdr *)((uint32_t)mbi_hdr->addr + KERNEL_SPACE_V_ADDR);
 		if (mbi_hdr->num == 0 || mbi_hdr->shndx == 0) {
 			return (NULL);
 		}
 		for (uint32_t i = 0; i < mbi_hdr->num; i++) {
-			shdr_cur = (t_Elf32_Shdr *)(mbi_hdr->addr + (mbi_hdr->size * i));
+			shdr_cur = (t_Elf32_Shdr *)((uint32_t)mbi_hdr->addr + KERNEL_SPACE_V_ADDR + (mbi_hdr->size * i));
 			if (shdr_cur->sh_type == SHT_SYMTAB) {
-				sym_tab = (t_Elf32_Sym *)shdr_cur->sh_addr;
+				sym_tab = (t_Elf32_Sym *)((uint32_t)shdr_cur->sh_addr + KERNEL_SPACE_V_ADDR);
 				size = (shdr_cur->sh_size / sizeof(t_Elf32_Sym));
 			}
 			if (i == mbi_hdr->shndx - 1) {
-				shdr_str_table = (char *)shdr_cur->sh_addr;
+				shdr_str_table = (char *)((uint32_t)shdr_cur->sh_addr + KERNEL_SPACE_V_ADDR);
 			}
 
 		}

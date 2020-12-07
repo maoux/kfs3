@@ -30,6 +30,6 @@ LDFILE		:= $(ARCHDIR)/$(ARCH)/linker.ld
 LDFLAGS		:= -T $(LDFILE) -m elf_i386
 ASFLAGS		:= -f elf32
 CFLAGS		:= -Wall -Wextra -Werror -m32 -mpreferred-stack-boundary=2
-CRCFLAGS	:= -ffreestanding -fno-builtin -nostdlib -nodefaultlibs -fno-stack-protector
+CRCFLAGS	:= -ffreestanding -fno-builtin -nostdlib -nodefaultlibs -fno-stack-protector -fno-pic
 IFLAGS		:= -I $(INCDIR) -I $(INCDIR)/$(KERNELDIR)
 DEBUGFLAGS	:= -g

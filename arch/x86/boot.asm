@@ -16,13 +16,19 @@ align 4
 
 ;declare a stack into bss section
 section .bss
+
 align 4096
 global page_directory
 page_directory:
 	resb 4096
+
 align 4096
 page_table:
 	resb 4096
+
+; align 4096
+; page_table_grub:
+; 	resb 4096
 
 align 4096
 stack_bottom:
@@ -60,11 +66,18 @@ virt_kernel_map_start:
 	; use loop to dec ecx
 	loop virt_kernel_map_start
 
-	; last page for vga buffer mapping
-	; it must therefore be at 0xC03FF000
-	; mov ebx, 0xb8000
-	; or ebx, 0x03
-	; mov dword [page_table - 0xC0000000 + 1023 * 4], ebx
+; 	mov edi, page_table_grub
+; 	sub edi, 0xC0000000
+; 	mov esi, ebx
+; 	mov ecx, 1024
+
+; virt_grub_info_map_start
+; 	mov edx, esi
+; 	or edx, 0x03
+; 	mov dword [edi], edx
+; 	add esi, 4096
+; 	add edi, 4
+; 	loop virt_grub_info_map_start
 
 	; first entry of page directory is our kernel page table 
 	; we started at 0x0, so identity mapping here
@@ -76,6 +89,8 @@ virt_kernel_map_start:
 	sub ecx, 0xC0000000
 	mov dword [ecx], page_table - 0xC0000000 + 0x03
 	mov dword [ecx + 768 * 4], page_table - 0xC0000000 + 0x03
+
+	;mov dword [ecx + 769 * 4], page_table_grub - 0xC0000000 + 0x03
 
 	; indicate to mmu through cr3 where to find physical addr of page directory
 
@@ -93,7 +108,7 @@ virt_kernel_map_start:
 section .text
 virt_kernel_map_end:
 	;unmap identity mapping
-	;mov dword [page_directory], 0
+	mov dword [page_directory], 0
 
 	;TLB flush
 	mov ecx, cr3
