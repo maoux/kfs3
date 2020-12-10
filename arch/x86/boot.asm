@@ -26,10 +26,6 @@ align 4096
 page_table:
 	resb 4096
 
-; align 4096
-; page_table_grub:
-; 	resb 4096
-
 align 4096
 stack_bottom:
 	resb 16384
@@ -44,6 +40,15 @@ section .multiboot_text
 	extern _kernel_end
 
 _start:
+	mov edi, page_directory
+	mov esi, 0
+	mov ecx, 1024
+
+zero_page_directory_start:
+	mov dword [edi], esi
+	add edi, 4
+	loop zero_page_directory_start
+
 	; phy addr of page table
 	mov edi, page_table
 	sub edi, 0xC0000000
@@ -65,19 +70,6 @@ virt_kernel_map_start:
 	add edi, 4
 	; use loop to dec ecx
 	loop virt_kernel_map_start
-
-; 	mov edi, page_table_grub
-; 	sub edi, 0xC0000000
-; 	mov esi, ebx
-; 	mov ecx, 1024
-
-; virt_grub_info_map_start
-; 	mov edx, esi
-; 	or edx, 0x03
-; 	mov dword [edi], edx
-; 	add esi, 4096
-; 	add edi, 4
-; 	loop virt_grub_info_map_start
 
 	; first entry of page directory is our kernel page table 
 	; we started at 0x0, so identity mapping here
