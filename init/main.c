@@ -9,7 +9,7 @@
 
 extern void		kmain(uint32_t magic, uint32_t *meminfo_offset)
 {
-	uint8_t		debug = 1;
+	uint8_t		debug = 0;
 
 	if (magic != 0x2badb002) {
 		return ;

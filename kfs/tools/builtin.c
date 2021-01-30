@@ -19,6 +19,7 @@ extern int		builtin_shutdown(char **opts)
 extern int		builtin_reboot(char **opts)
 {
 	(void)(opts);
+	reboot();
 	return (SH_SUCCESS);
 }
 
