@@ -2,6 +2,12 @@
 #include <kfs/multiboot.h>
 #include <kfs/kernel.h>
 
+/*
+	for internal use only
+	all addr passed through those functions should be aligned on 4096 bundary
+	as it is distributed by the pmm_page_alloc and pmm alloc functions.
+*/
+
 /* free chunks available */
 uint32_t			pmm_stack_index = 0;
 t_pmm_stack_unit	pmm_stack[PMM_STACK_MAX];
@@ -55,16 +61,26 @@ extern void			*pmm_page_get(void)
 
 extern void			pmm_page_free(void *addr)
 {
-	if (pmm_stack_index == PMM_STACK_MAX - 1) {
-		for (uint32_t i = 0; i < PMM_STACK_MAX; i++) {
-			if (((uint32_t)(pmm_stack[i].addr)) + PAGE_SIZE == (uint32_t)addr) {
+	if ((uint32_t)addr < 0x101000 || (uint32_t)addr >= 0xFFFFC000) {
+		// error addr is invalid
+		// 0x101000 = 1Mb + kernel page table
+		// 0xFFFFC000 grub reserved space ; about 4Gb - 1 page
+		return ;
+	}
+	if ((uint32_t)addr % 4096 != 0) {
+		// error addr is not aligned on page bundaries
+		return ;
+	}
+
+	// !!! defragmentation starting after half the stack is full !!!
+	// high chance to find a matching address
+	// create new room for bigger memory chunk request
+	if (pmm_stack_index == (PMM_STACK_MAX / 2)) {
+		for (uint32_t i = 0; i < pmm_stack_index; i++) {
+			if (((uint32_t)(pmm_stack[i].addr)) + pmm_stack[i].size == (uint32_t)addr) {
 				pmm_stack[i].size += PAGE_SIZE;
 				return ;
 			}
-		}
-		//leak - need to find a way to store 3Gb of pages on the stack
-		if (pmm_stack_index == PMM_STACK_MAX - 1) {
-			return ;
 		}
 	}
 	pmm_stack_index++;
@@ -111,6 +127,10 @@ extern uint32_t		pmm_get_size(void *addr)
 		// 0xFFFFC000 grub reserved space ; about 4Gb - 1 page
 		return (0);
 	}
+	if ((uint32_t)addr % 4096 != 0) {
+		// error addr is not aligned on page bundaries
+		return (0);
+	}
 	for (uint32_t i = 0; i < pmm_stack_alloc_index; i++) {
 		if ((uint32_t)(pmm_stack_alloc[i].addr) == (uint32_t)addr) {
 			return (pmm_stack_alloc[i].size);
@@ -133,18 +153,20 @@ extern void		pmm_free(void *addr)
 		// 0xFFFFC000 grub reserved space ; about 4Gb - 1 page
 		return ;
 	}
+	if ((uint32_t)addr % 4096 != 0) {
+		// error addr is not aligned on page bundaries
+		return ;
+	}
 	for (uint32_t i = 0; i < pmm_stack_alloc_index; i++) {
 		if ((uint32_t)(pmm_stack_alloc[i].addr) == (uint32_t)addr) {
-			if (pmm_stack_index == PMM_STACK_MAX - 1) {
+			if (pmm_stack_index == (PMM_STACK_MAX / 2)) {
 				//defragmentation
-				for (uint32_t i = 0; i < PMM_STACK_MAX; i++) {
-					if (((uint32_t)(pmm_stack[i].addr)) + PAGE_SIZE == (uint32_t)addr) {
-						pmm_stack[i].size += pmm_stack_alloc[i].size;
+				for (uint32_t j = 0; j < pmm_stack_index; j++) {
+					if (((uint32_t)(pmm_stack[j].addr)) + pmm_stack[j].size == (uint32_t)addr) {
+						pmm_stack[j].size += pmm_stack_alloc[j].size;
 						return ;
 					}
 				}
-				//leak - need to find a way to store 3Gb of pages on the stack
-				return ;
 			}
 			pmm_stack_index++;
 			pmm_stack[pmm_stack_index].size = pmm_stack_alloc[i].size + (PAGE_SIZE - (pmm_stack_alloc[i].size % PAGE_SIZE));
@@ -152,7 +174,8 @@ extern void		pmm_free(void *addr)
 			return ;
 		}
 	}
-	//assume addre is only one page wide
+	// assume addr is only one page wide
+	// actually using pmm_page_free would have been faster here
 	pmm_stack_index++;
 	pmm_stack[pmm_stack_index].size = PAGE_SIZE;
 	pmm_stack[pmm_stack_index].addr = addr;
