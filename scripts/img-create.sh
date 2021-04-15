@@ -1,7 +1,7 @@
 DISKNAME="disk.img"
 
 if [ ! -e $DISKNAME ]; then
-	dd if=/dev/zero of=$DISKNAME bs=1024 count=6144
+	dd if=/dev/zero of=$DISKNAME bs=1024 count=8192
 	echo "n\np\n1\n\n\na\nw" |  fdisk $DISKNAME
 	FIRST="true"
 else
