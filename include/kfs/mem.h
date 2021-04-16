@@ -8,9 +8,12 @@
 # define PAGE_SIZE				0x1000
 # define KERNEL_SPACE_V_ADDR	0xC0000000
 
-// enough to store 1048576 entries / map 4Gb of memory
-# define PMM_STACK_MAX			0x100000
-# define PMM_ALLOC_MAX			0xC000 // about 150000 entries
+/*
+    0x20000 = 131072d = 4Gb worth of pages as bit
+    4Gb = 1048576 pages / 8 bit per char = 131072
+	128 Ko
+*/
+# define BIT_MAP_SIZE			0x20000
 
 typedef struct pmm_stack_unit	t_pmm_stack_unit;
 struct pmm_stack_unit {
@@ -23,31 +26,28 @@ struct pmm_stack_unit {
 extern void		paging_enable(uint32_t page_directory);
 extern int		paging_init(void);
 
-/*			pmm api				*/
-
-extern int		pmm_init(void);
+/*			pmm api	v2 - wip			*/
 
 /*
-	one by one page allocator 
-	alloc : O(1) as long there is memory space
-	otherwise panic
-	free : O(n) to optimize
+	should be used at kernel start up
+	otherwise, undefined behavior is to expect
 
-	- !!!TODO improve free system to avoid leaks and defragment more efficiently!!!
+	return 0 upon success
+	return 1 if multiboot info wasn't available or misformated
 */
-extern void		*pmm_page_get(void);
-extern void		pmm_page_free(void *addr);
+extern int		page_manager_init(void);
 
 /*
-	one by one page allocator 
-	alloc : O(1) as long there is memory space
-	otherwise panic
-	free : O(n)
-
-	- !!!TODO improve free system to avoid leaks and defragment more efficiently!!!
+	O(n)
+	retrieve a free page aligned on PAGE_SIZE
+	return null pointer if did't find any page available
 */
-extern void		*pmm_alloc(uint32_t size);
-extern void		pmm_free(void *addr);
-extern uint32_t	pmm_get_size(void *addr);
+extern void			*page_manager_get(void);
+
+/*
+	O(1)
+	addr must be aligned with PAGE_SIZE
+*/
+extern void			page_manager_free(void *addr);
 
 #endif

@@ -24,10 +24,11 @@ extern void		kmain(uint32_t magic, uint32_t *meminfo_offset)
 
 	/* Setup multiboot infos api and use it to setup physical memory management */
 	grub_info_init((uint32_t *)((uint32_t)meminfo_offset + KERNEL_SPACE_V_ADDR));
-	if (pmm_init() == 0) {
+	if (page_manager_init() == 0) {
 		printk(KERN_INFO "Physical Memory Manager Setup done\n");
 	} else {
-		printk(KERN_ERR "Physical Memory Manager Setup failed\n");
+		printk(KERN_CRIT "Physical Memory Manager Setup failed\n");
+		return ;
 	}
 
 	if (debug) {
@@ -41,7 +42,7 @@ extern void		kmain(uint32_t magic, uint32_t *meminfo_offset)
 			break ;
 		case 1:
 		default:
-			printk(KERN_ERR "PS/2 Controller tests failed\n");
+			printk(KERN_CRIT "PS/2 Controller tests failed\n");
 			return ;
 	}
 
