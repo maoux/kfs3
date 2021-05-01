@@ -1,4 +1,5 @@
-SRCS_MEM_C :=	pages.c
+SRCS_MEM_C :=	pmm_bootstrap.c\
+				vmm.c
 
 SRCS_MEM_A :=
 

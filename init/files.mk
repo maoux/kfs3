@@ -1,8 +1,7 @@
 SRCS_INIT_C :=	main.c\
 				gdt_setup.c\
 				multiboot.c\
-				system.c\
-				mem_setup.c
+				system.c
 
 SRCS_INIT_S :=
 

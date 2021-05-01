@@ -110,6 +110,8 @@ virt_kernel_map_end:
 	mov esp, stack_top
 	xor ebp, ebp
 
+	mov edx, page_directory
+	push edx
 	push ebx
 	push eax
 

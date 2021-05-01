@@ -1,7 +1,7 @@
 #include <kfs/mem.h>
 #include <kfs/multiboot.h>
 #include <kfs/kernel.h>
-
+#include <kfs/pages.h>
 /*
     0x20000 = 131072d = 4Gb worth of pages as bit
     4Gb = 1048576 pages / 8 bit per char = 131072
@@ -18,8 +18,8 @@ unsigned char	pbitmap[BIT_MAP_SIZE];
 	Their behavior if you pass them invalid address are undefined
 */
 static void		pbitmap_init(void);
-static void		page_manager_set(uint32_t addr);
-static void		page_manager_unset(uint32_t addr);
+static void		pmm_set(uint32_t addr);
+static void		pmm_unset(uint32_t addr);
 
 static void		pbitmap_init(void)
 {
@@ -28,7 +28,8 @@ static void		pbitmap_init(void)
 	}
 }
 
-static void		page_manager_set(uint32_t addr)
+/* mark as taken */
+static void		pmm_set(uint32_t addr)
 {
 	uint32_t			map_index, bit_index;
 	unsigned char		tmp;
@@ -67,7 +68,8 @@ static void		page_manager_set(uint32_t addr)
 	}
 }
 
-static void		page_manager_unset(uint32_t addr)
+/* mark as free */
+static void		pmm_unset(uint32_t addr)
 {
 	uint32_t			map_index, bit_index;
 	unsigned char		tmp;
@@ -106,7 +108,7 @@ static void		page_manager_unset(uint32_t addr)
 	}
 }
 
-extern int		page_manager_init(void)
+extern int		pmm_init(void)
 {
 	t_grub_info			*tmp_grub_info;
 	t_mmap				*mmap;
@@ -120,7 +122,7 @@ extern int		page_manager_init(void)
 		while ((uint32_t)mmap < (uint32_t)tmp_grub_info->mmap_addr + KERNEL_SPACE_V_ADDR + tmp_grub_info->mmap_length) {
 
 			if (mmap->type == AVAILABLE_MEMORY && (mmap->length_low + mmap->length_high) >= PAGE_SIZE
-				&& mmap->base_addr_low >= 0x100000 && mmap->base_addr_low < 0xFFFFC000) {
+				&& mmap->base_addr_low < 0xFFFFC000) {
 				
 				tmp_addr = mmap->base_addr_low;
 				tmp_size = mmap->length_low + mmap->length_high;
@@ -128,8 +130,9 @@ extern int		page_manager_init(void)
 				if (tmp_addr == 0x100000) {
 					//preserve kernel at 1Mb => jump 3Mb further
 					//(1Mb bios + 3Mb kernel = 4Mb = 1 page table mapping of our kernel)
-					tmp_size -= (PAGE_SIZE * 768);
-					tmp_addr += (PAGE_SIZE * 768);
+					//add 4Mb space for security / scalability
+					tmp_size -= ((PAGE_SIZE * 768) + (PAGE_SIZE * PAGE_SIZE));
+					tmp_addr += ((PAGE_SIZE * 768) + (PAGE_SIZE * PAGE_SIZE));
 				} else if (tmp_addr % PAGE_SIZE) {
 					//align memory chunk on PAGE_SIZE
 					tmp_size -= tmp_size % PAGE_SIZE;
@@ -143,7 +146,7 @@ extern int		page_manager_init(void)
 
 				// mark memory chunk as free by unseting bit in bitmap
 				for (uint32_t i = 0; i < tmp_size; i += PAGE_SIZE) {
-					page_manager_unset(tmp_addr);
+					pmm_unset(tmp_addr);
 					tmp_addr += PAGE_SIZE;
 				}
 
@@ -157,13 +160,18 @@ extern int		page_manager_init(void)
 	return (0);
 }
 
-extern void			*page_manager_get(void)
+extern void			*pmm_page_get(mem_type_t mem_type)
 {
 	unsigned char	tmp;
-	uint32_t		addr;
+	uint32_t		addr, i, max;
 
-
-	for (uint32_t i = 0; i < BIT_MAP_SIZE; i++) {
+	if (mem_type == MEM_LOW) {
+		max = MEM_LOW_END;
+	} else {
+		max = MEM_MEDIUM_END;
+	}
+	max = max / PAGE_SIZE / 8;
+	for (i = mem_type == MEM_LOW ? MEM_LOW_START : MEM_MEDIUM_START; i < max; i++) {
 		if (pbitmap[i] != 0xff) {
 			
 			// atleast a page is free here
@@ -193,20 +201,20 @@ extern void			*page_manager_get(void)
 				addr = (uint32_t)(i * 8 * PAGE_SIZE + (PAGE_SIZE * 7));
 			} else {
 				printk(KERN_WARNING "Couldn't retrieve physical memory from a free space\n");
-				return (0);
+				return (NULL);
 			}
-			page_manager_set(addr);
+			pmm_set(addr);
 			return ((void *)addr);
 		}
 	}
 	// return null pointer
 	printk(KERN_EMERG "System out of physical memory\n");
-	return (0);
+	return (NULL);
 }
 
-extern void			page_manager_free(void *addr)
+extern void			pmm_page_free(void *addr)
 {
-	if ((uint32_t)addr < 0x101000 || (uint32_t)addr >= 0xFFFFC000) {
+	if ((uint32_t)addr == NULL || (uint32_t)addr >= 0xFFFFC000) {
 		// error addr is invalid
 		// 0x101000 = 1Mb + kernel page table
 		// 0xFFFFC000 grub reserved space ; about 4Gb - 1 page
@@ -217,5 +225,5 @@ extern void			page_manager_free(void *addr)
 		// addr is not aligned on page bundaries
 		return ;
 	}
-	page_manager_unset((uint32_t)addr);
+	pmm_unset((uint32_t)addr);
 }

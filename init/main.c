@@ -6,8 +6,9 @@
 #include <kfs/gdt.h>
 #include <kfs/elf.h>
 #include <kfs/mem.h>
+#include <kfs/pages.h>
 
-extern void		kmain(uint32_t magic, uint32_t *meminfo_offset)
+extern void		kmain(uint32_t magic, uint32_t *meminfo_offset, void *page_directory_vaddr)
 {
 	uint8_t		debug = 0;
 
@@ -24,10 +25,17 @@ extern void		kmain(uint32_t magic, uint32_t *meminfo_offset)
 
 	/* Setup multiboot infos api and use it to setup physical memory management */
 	grub_info_init((uint32_t *)((uint32_t)meminfo_offset + KERNEL_SPACE_V_ADDR));
-	if (page_manager_init() == 0) {
+	if (pmm_init() == 0) {
 		printk(KERN_INFO "Physical Memory Manager Setup done\n");
 	} else {
 		printk(KERN_CRIT "Physical Memory Manager Setup failed\n");
+		return ;
+	}
+
+	if (vmm_init(page_directory_vaddr) == 0) {
+		printk(KERN_INFO "Virtual Memory Manager Setup done\n");
+	} else {
+		printk(KERN_CRIT "Virtual Memory Manager Setup failed\n");
 		return ;
 	}
 
@@ -45,6 +53,7 @@ extern void		kmain(uint32_t magic, uint32_t *meminfo_offset)
 			printk(KERN_CRIT "PS/2 Controller tests failed\n");
 			return ;
 	}
+
 
 	shell();
 }
