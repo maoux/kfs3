@@ -4,58 +4,33 @@
 #include <string.h>
 
 t_page_directory	*global_pd;
+t_page_directory	*_current_pd;
+/* recursive page directory to page table itself */
 t_page_directory	*kernel_page_dir = (t_page_directory *) 0xFFFFF000;
 
 
-pageinfo	vmm_virt_to_page_index(void *addr)
+extern t_page_info			vmm_virt_to_page_index(void *addr)
 {
-	pageinfo	pginf;
-	uint32_t	vaddr = (uint32_t) addr;
+	t_page_info		pginf;
+	uint32_t		vaddr = (uint32_t) addr;
 
 	vaddr &= ~0xFFF;
 	pginf.pagetable = vaddr >> 22;
-	pginf.page = (vaddr <<10) >> 22;
+	pginf.page = (vaddr << 10) >> 22;
 	return (pginf);
 }
 
-static void			pde_attr_set(pd_entry *e, uint32_t attr)
+extern void					vmm_pd_switch(void *pd_vaddr)
 {
-	*e |= attr;
+	if ((uint32_t)pd_vaddr < 0x100000) {
+		return ;
+	}
+	_current_pd = (t_page_directory *)pd_vaddr;
 }
 
-static void			pte_attr_set(pt_entry *e, uint32_t attr)
+extern t_page_directory		*vmm_pd_get(void)
 {
-	*e |= attr;
-}
-
-static void			pde_attr_del(pd_entry *e, uint32_t attr)
-{
-	*e &= ~(attr);
-}
-
-static void			pte_attr_del(pt_entry *e, uint32_t attr)
-{
-	*e &= ~(attr);
-}
-
-static void			pde_frame_set(pd_entry *e, uint32_t addr)
-{
-	*e = (*e & ~PDE_FRAME) | addr;
-}
-
-static void			pte_frame_set(pt_entry *e, uint32_t addr)
-{
-	*e = (*e & ~PTE_FRAME) | addr;
-}
-
-static void			pde_frame_del(pd_entry *e, uint32_t addr)
-{
-	*e &= ~(addr);
-}
-
-static void			pte_frame_del(pt_entry *e, uint32_t addr)
-{
-	*e &= ~(addr);
+	return (_current_pd);
 }
 
 extern int			vmm_init(void *pd_vaddr)
@@ -64,7 +39,10 @@ extern int			vmm_init(void *pd_vaddr)
 		return (1);
 	}
 	global_pd = pd_vaddr;
+	vmm_pd_switch(global_pd);
+
 	pd_entry	*recursive_pd_mapping = &global_pd->pd_entries[PDE_INDEX_GET (0xFFC00000)];
+
 	pde_attr_set(recursive_pd_mapping, PDE_PRESENT);
 	pde_attr_set(recursive_pd_mapping, PDE_WRITABLE);
 	pde_frame_set(recursive_pd_mapping, ((uint32_t)global_pd - KERNEL_SPACE_V_ADDR));
@@ -82,44 +60,26 @@ extern int			vmm_alloc_page(pt_entry *e)
 	return (0);
 }
 
-extern void		vmm_free_page(pt_entry *e)
+extern void			vmm_free_page(pt_entry *e)
 {
 	pmm_page_free((void *) PTE_FRAME_GET (e));
 	pte_attr_del(e, PTE_PRESENT);
 }
 
-inline static pt_entry	*vmm_pt_lookup(t_page_table *pt, uint32_t vaddr)
-{
-	if (pt) {
-		return ((pt_entry *)pt->pt_entries[PTE_INDEX_GET (vaddr)]);
-	}
-	return (NULL);
-}
-
-inline static pd_entry	*vmm_pd_lookup(t_page_directory *pd, uint32_t vaddr)
-{
-	if (pd) {
-		return ((pd_entry *)pd->pd_entries[PDE_INDEX_GET (vaddr)]);
-	}
-	return (NULL);
-}
-
-extern t_page_directory		*vmm_pd_get(void)
-{
-	return (global_pd);
-}
-
-
-extern void vmm_flush_tld_entry(uint32_t addr)
+/*
+	wrapping asm function to be able to work with addr in future
+*/
+extern void			vmm_flush_tlb_entry(uint32_t addr)
 {
 	flush_TLB(addr);
 }
 
 extern int			vmm_map_page(void *paddr, void *vaddr, uint32_t attr)
 {
-	pageinfo 			pginf = vmm_virt_to_page_index(vaddr);
-	t_page_directory	*page_directory = global_pd;
+	t_page_info 		pginf = vmm_virt_to_page_index(vaddr);
+	t_page_directory	*page_directory = vmm_pd_get();
 	pd_entry			*e = &page_directory->pd_entries[PDE_INDEX_GET ((uint32_t)vaddr)];
+	t_page_table		*virtual_table = NULL;
 
 	if (!attr) {
 		//default attribut for kernel pages
@@ -132,7 +92,7 @@ extern int			vmm_map_page(void *paddr, void *vaddr, uint32_t attr)
 			return (1);
 		}
 
-		t_page_table	*virtual_table = (t_page_table *) (0xFFC00000 + (pginf.pagetable * 0x1000));
+		virtual_table = (t_page_table *) (0xFFC00000 + (pginf.pagetable * 0x1000));
 		pd_entry		*entry = &kernel_page_dir->pd_entries[pginf.pagetable];
 
 		pde_attr_set(entry, attr);
@@ -145,8 +105,8 @@ extern int			vmm_map_page(void *paddr, void *vaddr, uint32_t attr)
 		pte_attr_set(page, attr);
 		return (0);
 	}
-	t_page_table	*table = (t_page_table *) PAGE_GET_PHYSICAL_ADDRESS(e);
-	pt_entry 		*page = &table->pt_entries[PTE_INDEX_GET ((uint32_t)vaddr)];
+	virtual_table = (t_page_table *) (0xFFC00000 + (pginf.pagetable * 0x1000));
+	pt_entry 		*page = &virtual_table->pt_entries[PTE_INDEX_GET ((uint32_t)vaddr)];
 
 	pte_frame_set(page, (uint32_t)paddr);
 	pte_attr_set(page, attr);

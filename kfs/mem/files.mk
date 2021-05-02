@@ -1,5 +1,7 @@
 SRCS_MEM_C :=	pmm_bootstrap.c\
-				vmm.c
+				vmm.c\
+				pde.c\
+				pte.c
 
 SRCS_MEM_A :=
 
