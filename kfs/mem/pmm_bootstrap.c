@@ -234,7 +234,6 @@ extern void			pmm_page_free(void *addr)
 {
 	if ((uint32_t)addr == NULL || (uint32_t)addr >= 0xFFFFC000) {
 		// error addr is invalid
-		// 0x101000 = 1Mb + kernel page table
 		// 0xFFFFC000 grub reserved space ; about 4Gb - 1 page
 		return ;
 	}

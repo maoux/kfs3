@@ -103,6 +103,7 @@ extern void			pte_frame_del(pt_entry *e, uint32_t addr);
 extern int					vmm_init(void *pd);
 extern t_page_directory		*vmm_pd_get(void);
 extern int					vmm_map_page(void *paddr, void *vaddr, uint32_t attr);
+extern int					vmm_unmap_page(void *vaddr);
 
 extern t_page_info			vmm_virt_to_page_index(void *addr);
 extern void					vmm_pd_switch(void *pd_vaddr);

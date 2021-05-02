@@ -78,7 +78,7 @@ extern int			vmm_map_page(void *paddr, void *vaddr, uint32_t attr)
 {
 	t_page_info 		pginf = vmm_virt_to_page_index(vaddr);
 	t_page_directory	*page_directory = vmm_pd_get();
-	pd_entry			*e = &page_directory->pd_entries[PDE_INDEX_GET ((uint32_t)vaddr)];
+	pd_entry			*pde = &page_directory->pd_entries[PDE_INDEX_GET ((uint32_t)vaddr)];
 	t_page_table		*virtual_table = NULL;
 
 	if (!attr) {
@@ -86,29 +86,54 @@ extern int			vmm_map_page(void *paddr, void *vaddr, uint32_t attr)
 		attr = PTE_PRESENT | PTE_WRITABLE;
 	}
 
-	if (!PDE_IS_PRESENT(*e)) {
+	if (!PDE_IS_PRESENT(*pde)) {
 		t_page_table *new_table = (t_page_table *) pmm_page_get(MEM_MEDIUM);
 		if (!new_table) {
 			return (1);
 		}
 
-		virtual_table = (t_page_table *) (0xFFC00000 + (pginf.pagetable * 0x1000));
+		virtual_table = (t_page_table *) (0xFFC00000 + (pginf.pagetable * PAGE_SIZE));
 		pd_entry		*entry = &kernel_page_dir->pd_entries[pginf.pagetable];
 
 		pde_attr_set(entry, attr);
 		pde_frame_set(entry, (uint32_t)new_table);
 		memset(virtual_table, 0, sizeof(t_page_table));
 		
-		pt_entry	*page = &virtual_table->pt_entries[pginf.page];
+		pt_entry	*pte = &virtual_table->pt_entries[pginf.page];
 
-		pte_frame_set(page, (uint32_t)paddr);
-		pte_attr_set(page, attr);
+		pte_frame_set(pte, (uint32_t)paddr);
+		pte_attr_set(pte, attr);
 		return (0);
 	}
-	virtual_table = (t_page_table *) (0xFFC00000 + (pginf.pagetable * 0x1000));
-	pt_entry 		*page = &virtual_table->pt_entries[PTE_INDEX_GET ((uint32_t)vaddr)];
+	virtual_table = (t_page_table *) (0xFFC00000 + (pginf.pagetable * PAGE_SIZE));
+	pt_entry 		*pte = &virtual_table->pt_entries[PTE_INDEX_GET ((uint32_t)vaddr)];
 
-	pte_frame_set(page, (uint32_t)paddr);
-	pte_attr_set(page, attr);
+	pte_frame_set(pte, (uint32_t)paddr);
+	pte_attr_set(pte, attr);
+	return (0);
+}
+
+extern int		vmm_unmap_page(void *vaddr)
+{
+	if ((uint32_t)vaddr % PAGE_SIZE) {
+		return (1);
+	}
+	
+	t_page_directory	*page_directory = vmm_pd_get();
+	t_page_info 		pginf = vmm_virt_to_page_index(vaddr);
+	pd_entry			*pde = &page_directory->pd_entries[PDE_INDEX_GET ((uint32_t)vaddr)];
+
+	if (!PDE_IS_PRESENT (*pde)) {
+		return (2);
+	}
+
+	t_page_table		*virtual_table = (t_page_table *) (0xFFC00000 + (pginf.pagetable * PAGE_SIZE));
+	pt_entry			*pte = &virtual_table->pt_entries[PTE_INDEX_GET ((uint32_t)vaddr)];
+
+	if (!PTE_IS_PRESENT (*pte)) {
+		return (3);
+	}
+
+	vmm_free_page(pte);
 	return (0);
 }
