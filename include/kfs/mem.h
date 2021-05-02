@@ -3,7 +3,7 @@
 
 # include <stdint.h>
 
-# define KERNEL_SPACE_V_ADDR	0xC0000000
+# define KERNEL_SPACE_V_ADDR	0xC0000000 //kernel virtual memory space offset
 
 /*
     0x20000 = 131072d = 4Gb worth of pages as bit
@@ -30,8 +30,8 @@ enum mem_type_e {
 # define ZONE_DMA_START			0x0
 # define ZONE_DMA_END			0x1000000	// 16Mb
 
-# define __pa(x)	((uint32_t)x - KERNEL_SPACE_V_ADDR)
-# define __va(x)	((uint32_t)x + KERNEL_SPACE_V_ADDR)
+# define __pa(x)	((uint32_t)x - KERNEL_SPACE_V_ADDR) //get physical kernel addr from virtual
+# define __va(x)	((uint32_t)x + KERNEL_SPACE_V_ADDR) //get virtual kernel addr from physical
 
 
 typedef struct pmm_stack_unit	t_pmm_stack_unit;

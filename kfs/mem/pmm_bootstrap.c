@@ -11,6 +11,7 @@
 	pbitmap stand for physical (memory) bitmap
 */
 unsigned char	pbitmap[BIT_MAP_SIZE];
+int				mem_medium_index = 0; //simple caching mechanism
 
 /*
 	These functions make the arithmetic themselves
@@ -177,11 +178,14 @@ extern void			*pmm_page_get(mem_type_t mem_type)
 		i = MEM_LOW_START;
 		max = MEM_LOW_END;
 	} else {
-		i = MEM_MEDIUM_START;
+		if (mem_medium_index) {
+			i = mem_medium_index;
+		} else {
+			i = MEM_MEDIUM_START;
+			i = i / PAGE_SIZE / 8;
+
+		}
 		max = MEM_MEDIUM_END;
-	}
-	if (i) {
-		i = i / PAGE_SIZE / 8;
 	}
 	max = max / PAGE_SIZE / 8;
 	for (; i < max; i++) {
@@ -217,6 +221,7 @@ extern void			*pmm_page_get(mem_type_t mem_type)
 				return (NULL);
 			}
 			pmm_set(addr);
+			mem_medium_index = i;
 			return ((void *)addr);
 		}
 	}
@@ -239,4 +244,5 @@ extern void			pmm_page_free(void *addr)
 		return ;
 	}
 	pmm_unset((uint32_t)addr);
+	mem_medium_index = (uint32_t)addr / PAGE_SIZE / 8;
 }

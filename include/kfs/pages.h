@@ -12,6 +12,30 @@ extern void *page_directory;
 
 # define REC_PAGE_DIR_OFFSET	0xffc00000	// last 4Mb of memory
 
+/*
+	Recursive page dictory structure helper
+*/
+typedef struct s_page_info			t_page_info;
+struct s_page_info {
+	int pagetable;
+	int page;
+} __attribute((packed))__;
+
+typedef uint32_t pt_entry;
+typedef uint32_t pd_entry;
+
+typedef struct s_page_directory	t_page_directory;
+struct s_page_directory {
+	uint32_t	pd_entries[PAGE_DIRECTORY_SIZE];
+};
+
+typedef struct s_page_table		t_page_table;
+struct s_page_table {
+	uint32_t	pt_entries[PAGE_TABLE_SIZE];
+};
+
+
+
 typedef enum e_pde_attr			pde_attr;
 enum	e_pde_attr {
 	PDE_FRAME = 0x7ffff000,					// 1111 1111 1111 1111 1111 0000 0000 0000
@@ -25,6 +49,20 @@ enum	e_pde_attr {
 	PDE_WRITABLE = 2,						// 0000 0000 0010
 	PDE_PRESENT = 1							// 0000 0000 0001
 };
+
+extern void			pde_attr_set(pt_entry *e, uint32_t attr);
+extern void			pde_attr_del(pt_entry *e, uint32_t attr);
+extern void			pde_frame_set(pt_entry *e, uint32_t addr);
+extern void			pde_frame_del(pt_entry *e, uint32_t addr);
+
+# define PDE_INDEX_GET(addr)	((addr >> 22) & 0x3ff)
+
+# define PDE_IS_PRESENT(e)		(e & PDE_PRESENT)
+# define PDE_IS_WRITABLE(e)		(e & PDE_WRITABLE)
+# define PDE_IS_USER(e)			(e & PDE_USER)
+
+# define PDE_FRAME_GET(e)		(*e & PDE_FRAME)
+# define PDE_ATTR_GET(e)		(*e & ~(PDE_FRAME))
 
 
 typedef enum e_pte_attr			pte_attr;
@@ -41,49 +79,43 @@ enum	e_pte_attr {
 	PTE_PRESENT = 1							// 0000 0000 0001
 };
 
-typedef struct pageinfo			pageinfo;
-struct pageinfo {
-	int pagetable;
-	int page;
-} __attribute((packed))__;
+extern void			pte_attr_set(pt_entry *e, uint32_t attr);
+extern void			pte_attr_del(pt_entry *e, uint32_t attr);
+extern void			pte_frame_set(pt_entry *e, uint32_t addr);
+extern void			pte_frame_del(pt_entry *e, uint32_t addr);
 
-typedef uint32_t pt_entry;
-typedef uint32_t pd_entry;
-
-# define PDE_INDEX_GET(addr)	((addr >> 22) & 0x3ff)
 # define PTE_INDEX_GET(addr)	((addr >> 12) & 0x3ff) //((addr << 10) >> 22)
-
-# define PDE_IS_PRESENT(e)		(e & PDE_PRESENT)
-# define PDE_IS_WRITABLE(e)		(e & PDE_WRITABLE)
-# define PDE_IS_USER(e)			(e & PDE_USER)
 
 # define PTE_IS_PRESENT(e)		(e & PTE_PRESENT)
 # define PTE_IS_WRITABLE(e)		(e & PTE_WRITABLE)
 # define PTE_IS_USER(e)			(e & PTE_USER)
-
-# define PDE_FRAME_GET(e)		(*e & PDE_FRAME)
-# define PDE_ATTR_GET(e)		(*e & ~(PDE_FRAME))
 
 # define PTE_FRAME_GET(e)		(*e & PTE_FRAME)
 # define PTE_ATTR_GET(e)		(*e & ~(PTE_FRAME))
 
 # define PAGE_GET_PHYSICAL_ADDRESS(x) (*x & ~0xfff)
 
-typedef struct s_page_directory	t_page_directory;
-struct s_page_directory {
-	uint32_t	pd_entries[PAGE_DIRECTORY_SIZE];
-};
 
-typedef struct s_page_table		t_page_table;
-struct s_page_table {
-	uint32_t	pt_entries[PAGE_TABLE_SIZE];
-};
+/*
+	VMM Core functions
+*/
 
-extern int		vmm_init(void *pd);
+extern int					vmm_init(void *pd);
 extern t_page_directory		*vmm_pd_get(void);
-extern int			vmm_map_page(void *paddr, void *vaddr, uint32_t attr);
+extern int					vmm_map_page(void *paddr, void *vaddr, uint32_t attr);
 
+extern t_page_info			vmm_virt_to_page_index(void *addr);
+extern void					vmm_pd_switch(void *pd_vaddr);
+extern t_page_directory		*vmm_pd_get(void);
+
+extern int					vmm_alloc_page(pt_entry *e);
+extern void					vmm_free_page(pt_entry *e);
+
+
+/*
+	TLB functions
+*/
 extern void flush_TLB(uint32_t vaddr);
-extern void vmm_flush_tld_entry(uint32_t addr);
+extern void vmm_flush_tlb_entry(uint32_t addr);
 
 #endif
