@@ -43,6 +43,9 @@ objs
 *.idb
 *.pdb
 
+#vscode
+*.vscode
+*vscode*
 # Kernel Module Compile Results
 *.mod*
 *.cmd
