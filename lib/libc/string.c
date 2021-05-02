@@ -148,22 +148,22 @@ extern char		*strcpy(char *dest, const char *src)
 {
 	size_t		i = 0;
 
-	while (*(src + i) && *(dest + i)) {
+	while (*(src + i)) {
 		*(dest + i) = *(src + i);
 		i++;
 	}
-	return dest;
+	return (dest);
 }
 
 extern char		*strncpy(char *dest, const char *src, size_t n)
 {
 	size_t		i = 0;
 
-	while (*(src + i) && *(dest + i) && i < n) {
+	while (*(src + i) && i < n) {
 		*(dest + i) = *(src + i);
 		i++;
 	}
-	return dest;
+	return (dest);
 }
 
 static char		c_is_in_str(const char *s, char c)
