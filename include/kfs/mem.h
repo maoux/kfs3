@@ -23,9 +23,9 @@ enum mem_type_e {
 };
 
 # define MEM_LOW_START			0x0
-# define MEM_LOW_END			0xfffff		// 1Mb
-# define MEM_MEDIUM_START		0x100000	// 1Mb + 1
-# define MEM_MEDIUM_END			0xffffffff	// 4Gb
+# define MEM_LOW_END			0xfffff		// 1Mb - 1
+# define MEM_MEDIUM_START		0x100000	// 1Mb 
+# define MEM_MEDIUM_END			0xffbfffff	// 4Gb - 4Mb - 1
 
 # define ZONE_DMA_START			0x0
 # define ZONE_DMA_END			0x1000000	// 16Mb

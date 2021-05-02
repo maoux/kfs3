@@ -7,6 +7,7 @@
 #include <kfs/elf.h>
 #include <kfs/mem.h>
 #include <kfs/pages.h>
+#include <string.h>
 
 extern void		kmain(uint32_t magic, uint32_t *meminfo_offset, void *page_directory_vaddr)
 {
@@ -54,6 +55,12 @@ extern void		kmain(uint32_t magic, uint32_t *meminfo_offset, void *page_director
 			return ;
 	}
 
-
+	uint32_t	*page1 = pmm_page_get(MEM_MEDIUM);
+	printk("page1: %x\n", page1);
+	char		*str = (char *)0xC1000000;
+	vmm_map_page((void *)page1, (void *)str, 0);
+	vmm_flush_tld_entry((uint32_t)str);
+	str = strcpy(str, "Hello World !\n"); 
+	printk("%s\n", str);
 	shell();
 }

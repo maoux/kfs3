@@ -114,6 +114,8 @@ extern int		pmm_init(void)
 	t_mmap				*mmap;
 	uint32_t			tmp_addr, tmp_size;
 
+	char				first_addr = 0;
+
 	pbitmap_init();
 	tmp_grub_info = grub_info_get();
 	if (tmp_grub_info && IS_GFLAG(tmp_grub_info->flags, GFLAG_MMAP)) {
@@ -122,21 +124,27 @@ extern int		pmm_init(void)
 		while ((uint32_t)mmap < (uint32_t)tmp_grub_info->mmap_addr + KERNEL_SPACE_V_ADDR + tmp_grub_info->mmap_length) {
 
 			if (mmap->type == AVAILABLE_MEMORY && (mmap->length_low + mmap->length_high) >= PAGE_SIZE
-				&& mmap->base_addr_low < 0xFFFFC000) {
+				&& mmap->base_addr_low < 0xFFFFC000 && (mmap->base_addr_low != 0 || first_addr == 0)) {
 				
 				tmp_addr = mmap->base_addr_low;
 				tmp_size = mmap->length_low + mmap->length_high;
+
+				if (tmp_addr == 0x0) {
+					//work arround an issue, grub retrieve 2 available space at 0,
+					//avoid using the second one, TODO search about this
+					first_addr = 1;
+				}
 
 				if (tmp_addr == 0x100000) {
 					//preserve kernel at 1Mb => jump 3Mb further
 					//(1Mb bios + 3Mb kernel = 4Mb = 1 page table mapping of our kernel)
 					//add 4Mb space for security / scalability
-					tmp_size -= ((PAGE_SIZE * 768) + (PAGE_SIZE * PAGE_SIZE));
-					tmp_addr += ((PAGE_SIZE * 768) + (PAGE_SIZE * PAGE_SIZE));
+					tmp_size -= ((PAGE_SIZE * 768) + (1024 * PAGE_SIZE));
+					tmp_addr += ((PAGE_SIZE * 768) + (1024 * PAGE_SIZE));
 				} else if (tmp_addr % PAGE_SIZE) {
 					//align memory chunk on PAGE_SIZE
-					tmp_size -= tmp_size % PAGE_SIZE;
-					tmp_addr -= tmp_addr % PAGE_SIZE;
+					tmp_size = tmp_size - (tmp_size % PAGE_SIZE) - PAGE_SIZE;
+					tmp_addr = tmp_addr - (tmp_addr % PAGE_SIZE) + PAGE_SIZE;
 				}
 				if (tmp_size < PAGE_SIZE) {
 					//chunk is no longer big enough to store a page after alignement
@@ -166,12 +174,17 @@ extern void			*pmm_page_get(mem_type_t mem_type)
 	uint32_t		addr, i, max;
 
 	if (mem_type == MEM_LOW) {
+		i = MEM_LOW_START;
 		max = MEM_LOW_END;
 	} else {
+		i = MEM_MEDIUM_START;
 		max = MEM_MEDIUM_END;
 	}
+	if (i) {
+		i = i / PAGE_SIZE / 8;
+	}
 	max = max / PAGE_SIZE / 8;
-	for (i = mem_type == MEM_LOW ? MEM_LOW_START : MEM_MEDIUM_START; i < max; i++) {
+	for (; i < max; i++) {
 		if (pbitmap[i] != 0xff) {
 			
 			// atleast a page is free here

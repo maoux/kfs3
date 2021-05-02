@@ -10,6 +10,8 @@ extern void *page_directory;
 # define PAGE_TABLE_SIZE		1024
 # define PAGE_SIZE				4096
 
+# define REC_PAGE_DIR_OFFSET	0xffc00000	// last 4Mb of memory
+
 typedef enum e_pde_attr			pde_attr;
 enum	e_pde_attr {
 	PDE_FRAME = 0x7ffff000,					// 1111 1111 1111 1111 1111 0000 0000 0000
@@ -39,11 +41,17 @@ enum	e_pte_attr {
 	PTE_PRESENT = 1							// 0000 0000 0001
 };
 
+typedef struct pageinfo			pageinfo;
+struct pageinfo {
+	int pagetable;
+	int page;
+} __attribute((packed))__;
+
 typedef uint32_t pt_entry;
 typedef uint32_t pd_entry;
 
 # define PDE_INDEX_GET(addr)	((addr >> 22) & 0x3ff)
-# define PTE_INDEX_GET(addr)	((addr >> 12) & 0x3ff)
+# define PTE_INDEX_GET(addr)	((addr >> 12) & 0x3ff) //((addr << 10) >> 22)
 
 # define PDE_IS_PRESENT(e)		(e & PDE_PRESENT)
 # define PDE_IS_WRITABLE(e)		(e & PDE_WRITABLE)
@@ -59,6 +67,8 @@ typedef uint32_t pd_entry;
 # define PTE_FRAME_GET(e)		(*e & PTE_FRAME)
 # define PTE_ATTR_GET(e)		(*e & ~(PTE_FRAME))
 
+# define PAGE_GET_PHYSICAL_ADDRESS(x) (*x & ~0xfff)
+
 typedef struct s_page_directory	t_page_directory;
 struct s_page_directory {
 	uint32_t	pd_entries[PAGE_DIRECTORY_SIZE];
@@ -72,5 +82,8 @@ struct s_page_table {
 extern int		vmm_init(void *pd);
 extern t_page_directory		*vmm_pd_get(void);
 extern int			vmm_map_page(void *paddr, void *vaddr, uint32_t attr);
+
+extern void flush_TLB(uint32_t vaddr);
+extern void vmm_flush_tld_entry(uint32_t addr);
 
 #endif
