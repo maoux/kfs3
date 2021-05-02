@@ -9,5 +9,8 @@ extern void		shutdown(void)
 
 extern void		reboot(void)
 {
+	char		*s;
 
+	s = 0;
+	s[0] = '1';
 }
