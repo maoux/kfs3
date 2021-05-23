@@ -28,6 +28,20 @@ extern void					vmm_pd_switch(void *pd_vaddr)
 	_current_pd = (t_page_directory *)pd_vaddr;
 }
 
+extern t_page_directory		*vmm_cr3_get(void)
+{
+	t_page_directory		*cr3;
+
+	__asm__ volatile ("movl %%cr3, %0" : "=r" (cr3) ::);
+	return (cr3);
+}
+
+extern void					vmm_cr3_set(t_page_directory *new_pd)
+{
+
+	__asm__ volatile ("movl %0, %%cr3" :: "r" (new_pd) :);
+}
+
 extern t_page_directory		*vmm_pd_get(void)
 {
 	return (_current_pd);
