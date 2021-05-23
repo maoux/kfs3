@@ -69,9 +69,9 @@ extern void			vmm_free_page(pt_entry *e)
 /*
 	wrapping asm function to be able to work with addr in future
 */
-extern void			vmm_flush_tlb_entry(uint32_t addr)
+extern void			vmm_flush_tlb_entry(uint32_t *addr)
 {
-	flush_TLB(addr);
+	flush_TLB((uint32_t)addr);
 }
 
 extern int			vmm_map_page(void *paddr, void *vaddr, uint32_t attr)

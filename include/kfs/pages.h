@@ -12,6 +12,8 @@ extern void *page_directory;
 
 # define REC_PAGE_DIR_OFFSET	0xffc00000	// last 4Mb of memory
 
+# define PAGE_ALIGN(x)			((x + PAGE_SIZE - 1) & (~(PAGE_SIZE - 1)))
+
 /*
 	Recursive page dictory structure helper
 */
@@ -117,6 +119,6 @@ extern void					vmm_free_page(pt_entry *e);
 	TLB functions
 */
 extern void flush_TLB(uint32_t vaddr);
-extern void vmm_flush_tlb_entry(uint32_t addr);
+extern void vmm_flush_tlb_entry(uint32_t *addr);
 
 #endif

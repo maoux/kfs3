@@ -1,6 +1,9 @@
 #ifndef __KERNEL_H__
 # define __KERNEL_H__
 
+# include <stddef.h>
+
+
 # define NULL 0
 
 # define KERN_NONE		"8"
@@ -21,6 +24,9 @@
 # define TYPE_LONG_LONG	4
 # define TYPE_DEFAULT	0
 
-int		printk(const char *fmt, ...);
+int					printk(const char *fmt, ...);
+extern int			mm_init(void *page_directory_vaddr);
+extern void			*vmalloc(size_t size);
+extern void			vfree(void *vaddr);
 
 #endif

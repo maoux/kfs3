@@ -26,17 +26,8 @@ extern void		kmain(uint32_t magic, uint32_t *meminfo_offset, void *page_director
 
 	/* Setup multiboot infos api and use it to setup physical memory management */
 	grub_info_init((uint32_t *)((uint32_t)meminfo_offset + KERNEL_SPACE_V_ADDR));
-	if (pmm_init() == 0) {
-		printk(KERN_INFO "Physical Memory Manager Setup done\n");
-	} else {
-		printk(KERN_CRIT "Physical Memory Manager Setup failed\n");
-		return ;
-	}
 
-	if (vmm_init(page_directory_vaddr) == 0) {
-		printk(KERN_INFO "Virtual Memory Manager Setup done\n");
-	} else {
-		printk(KERN_CRIT "Virtual Memory Manager Setup failed\n");
+	if (mm_init(page_directory_vaddr)) {
 		return ;
 	}
 
@@ -55,12 +46,5 @@ extern void		kmain(uint32_t magic, uint32_t *meminfo_offset, void *page_director
 			return ;
 	}
 
-	uint32_t	*page1 = pmm_page_get(MEM_MEDIUM);
-	printk("page1: %x\n", page1);
-	char		*str = (char *)0xC1000000;
-	vmm_map_page((void *)page1, (void *)str, 0);
-	vmm_flush_tld_entry((uint32_t)str);
-	str = strcpy(str, "Hello World !\n"); 
-	printk("%s\n", str);
 	shell();
 }

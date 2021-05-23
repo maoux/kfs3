@@ -38,7 +38,7 @@ static char		*get_symbol_elf32(uint32_t addr)
 	char			*shdr_str_table = NULL;
 	t_Elf32_Sym		*sym_tab;
 	t_Elf32_Sym		*sym = NULL;
-	int				size;
+	int				size = 0;
 
 	mbi_hdr = hdrt_info_get();
 	if (mbi_hdr) {
@@ -94,7 +94,7 @@ extern int		builtin_stack_print(char **opts)
 	__asm__ volatile ("movl %%ebp, %0" : "=r" (ebp) ::);
 
 	printk("Backtrace:\n");
-	for (frame = 0; ebp[0] && frame < max_frame; frame++) {
+	for (frame = 1; ebp[0] && frame < max_frame; frame++) {
         printk("  #%d  %08x in %s\n", frame, ebp[1], get_symbol_elf32(ebp[1]));
         ebp = (uint32_t *)(ebp[0]);
     }
