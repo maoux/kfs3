@@ -71,27 +71,29 @@ extern void			pmm_page_free(void *addr);
 /*				VMALLOC				*/
 
 /* used for vmalloc map data structure
-	4096 / sizeof(t_vmalloc_block) = 4096 / 8 = 512
-	32768 / 512 = 64 pages required to store the entire map of vmalloc address space
-	32768 * 8 = 256Kb size of actual vmalloc data structure map
+	4096 / sizeof(t_vmalloc_block) = 4096 / 16 = 256
+	32768 / 256 = 128 pages required to store the entire map of vmalloc address space
+	32768 * 16 = 512Kb size of actual vmalloc data structure map
 */
-# define VMALLOC_STARTUP_ADDR		KERNEL_SPACE_V_ADDR + KERNEL_SIZE + SECURITY_SPACE_SIZE // 0xc1000000
+# define VMALLOC_STARTUP_ADDR		0xC1000000//KERNEL_SPACE_V_ADDR + KERNEL_SIZE + SECURITY_SPACE_SIZE // 0xc1000000
 # define VMALLOC_NB_ENTRIES			32768 // 128Mb / 4096 (PAGE_SIZE)
-# define VMALLOC_NB_PAGES			64
+# define VMALLOC_NB_PAGES			128
 
 /* used for vmalloc actual function
 	VMALLOC_STARTUP_ADDR + VMALLOC_NB_ENTRIES * sizeof(t_vmalloc_block) = 0xC1040000
 	vmalloc space is 128 Mb
 	VMALLOC_ADDR_SPACE_START + 128Mb = 
 */
-# define VMALLOC_ADDR_SPACE_START	0xC1040000//3Gb + 16Mb + 256Kb startup heap address in virtual address space
-# define VMALLOC_ADDR_SPACE_END		0xC9040000 //3Gb + 16Mb + 256Kb + 128Mb end of heap addresses in virtual address space
+# define VMALLOC_ADDR_SPACE_START	0xC1080000//3Gb + 16Mb + 512Kb startup heap address in virtual address space
+# define VMALLOC_ADDR_SPACE_END		0xC9080000 //3Gb + 16Mb + 512Kb + 128Mb end of heap addresses in virtual address space
 
 typedef struct s_vmalloc_block	t_vmalloc_block;
 struct s_vmalloc_block {
 	size_t		nb_pages;
 	size_t		prev_nb_pages;
 	uint32_t	effective_size;
+	uint32_t	*physical_addr;
+	uint32_t	align;
 }__attribute__((packed));
 
 extern int			vmalloc_init(void);
@@ -100,5 +102,6 @@ extern void			*vzmalloc(size_t size);
 extern void			vfree(void *vaddr);
 extern uint32_t		vmalloc_get_size(void *vaddr);
 extern uint32_t		vmalloc_get_size_physical(void *vaddr);
+extern void			test_vmalloc();
 
 #endif
