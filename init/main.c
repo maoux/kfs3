@@ -45,6 +45,8 @@ extern void		kmain(uint32_t magic, uint32_t *meminfo_offset, void *page_director
 			printk(KERN_CRIT "PS/2 Controller tests failed\n");
 			return ;
 	}
-	test_vmalloc();
+	if (debug) {
+		test_vmalloc();
+	}
 	shell();
 }

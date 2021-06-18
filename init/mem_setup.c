@@ -11,9 +11,9 @@
 extern int		mm_init(void *page_directory_vaddr)
 {
 	if (pmm_init() == 0) {
-		printk(KERN_INFO "Physical Memory Manager Setup done\n");
+		printk(KERN_INFO "Physical Memory (Bootstrap) Manager Setup done\n");
 	} else {
-		printk(KERN_CRIT "Physical Memory Manager Setup failed\n");
+		printk(KERN_CRIT "Physical Memory (Bootstrap) Manager Setup failed\n");
 		return (1);
 	}
 
@@ -30,6 +30,18 @@ extern int		mm_init(void *page_directory_vaddr)
 		printk(KERN_CRIT "vmalloc Setup failed\n");
 		return (1);
 	}
+
+	if (pmm_final_init(pmm_bootstrap_bitmap_addr_get()) == 0) {
+		printk(KERN_INFO "Physical Memory (Final) Manager Setup done\n");
+	} else {
+		printk(KERN_CRIT "Physical Memory (Final) Manager Setup failed\n");
+		return (1);
+	}
+
+	pmm_unit_foreach(&pmm_unit_print, NULL);
+
+	//pmm final
+	//kmalloc
 
 	return (0);
 }

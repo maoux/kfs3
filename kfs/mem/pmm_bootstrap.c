@@ -169,7 +169,7 @@ extern int		pmm_init(void)
 	return (0);
 }
 
-extern void			*pmm_page_get(mem_type_t mem_type)
+extern void			*pmm_bootstrap_page_get(mem_type_t mem_type)
 {
 	unsigned char	tmp;
 	uint32_t		addr, i, max;
@@ -244,4 +244,9 @@ extern void			pmm_page_free(void *addr)
 	}
 	pmm_unset((uint32_t)addr);
 	mem_medium_index = (uint32_t)addr / PAGE_SIZE / 8;
+}
+
+extern unsigned char	*pmm_bootstrap_bitmap_addr_get(void)
+{
+	return (&(pbitmap[0]));
 }

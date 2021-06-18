@@ -1,5 +1,6 @@
 SRCS_MEM_C :=	pmm_bootstrap.c\
 				vmm.c\
+				pmm.c\
 				pde.c\
 				pte.c\
 				vmalloc.c

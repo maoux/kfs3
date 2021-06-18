@@ -37,13 +37,10 @@ enum mem_type_e {
 # define __va(x)	((uint32_t)x + KERNEL_SPACE_V_ADDR) //get virtual kernel addr from physical
 
 
-typedef struct pmm_stack_unit	t_pmm_stack_unit;
-struct pmm_stack_unit {
-	uint32_t			size;
-	void				*addr;
-};
 
-/*				pmm api	v2				*/
+/*				pmm bootstrap api	v2				*/
+
+extern unsigned char	*pmm_bootstrap_bitmap_addr_get(void);
 
 /*
 	should be used at kernel start up
@@ -59,6 +56,7 @@ extern int			pmm_init(void);
 	retrieve a free page aligned on PAGE_SIZE
 	return null pointer if did't find any page available
 */
+extern void			*pmm_bootstrap_page_get(mem_type_t mem_type);
 extern void			*pmm_page_get(mem_type_t mem_type);
 
 /*
@@ -66,6 +64,31 @@ extern void			*pmm_page_get(mem_type_t mem_type);
 	addr must be aligned with PAGE_SIZE
 */
 extern void			pmm_page_free(void *addr);
+
+
+/*				pmm final api	v2				*/
+
+# define PMM_STACK_SEGMENT_SIZE	256
+
+struct pmm_stack_unit {
+	uint32_t				size;
+	void					*addr;
+	struct pmm_stack_unit	*next;
+	struct pmm_stack_unit	*prev;
+} __attribute__((packed));
+
+struct pmm_stack_segment {
+	struct pmm_stack_unit	pmm_sseg[PMM_STACK_SEGMENT_SIZE];
+};
+
+typedef struct pmm_stack_unit		t_pmm_stack;
+typedef struct pmm_stack_segment	t_pmm_stack_segment;
+typedef struct pmm_stack_unit		t_pmm_stack_unit;
+
+extern int				pmm_final_init(unsigned char *pbitmap);
+extern void				pmm_unit_print(t_pmm_stack_unit *unit, void *args);
+extern void				pmm_unit_foreach(void (*f)(t_pmm_stack_unit *u, void *args), void *params);
+
 
 
 /*				VMALLOC				*/
