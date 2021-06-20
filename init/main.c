@@ -11,7 +11,7 @@
 
 extern void		kmain(uint32_t magic, uint32_t *meminfo_offset, void *page_directory_vaddr)
 {
-	uint8_t		debug = 0;
+	uint8_t		debug = 1;
 
 	if (magic != 0x2badb002) {
 		return ;
@@ -46,7 +46,9 @@ extern void		kmain(uint32_t magic, uint32_t *meminfo_offset, void *page_director
 			return ;
 	}
 	if (debug) {
+		pmm_unit_foreach(&pmm_unit_print, NULL);
 		test_vmalloc();
+		pmm_unit_foreach(&pmm_unit_print, NULL);
 	}
 	shell();
 }

@@ -31,14 +31,14 @@ extern int		mm_init(void *page_directory_vaddr)
 		return (1);
 	}
 
-	if (pmm_final_init(pmm_bootstrap_bitmap_addr_get()) == 0) {
+	if (pmm_init_final(pmm_bootstrap_bitmap_addr_get()) == 0) {
 		printk(KERN_INFO "Physical Memory (Final) Manager Setup done\n");
 	} else {
 		printk(KERN_CRIT "Physical Memory (Final) Manager Setup failed\n");
 		return (1);
 	}
 
-	pmm_unit_foreach(&pmm_unit_print, NULL);
+//	pmm_unit_foreach(&pmm_unit_print, NULL);
 
 	//pmm final
 	//kmalloc

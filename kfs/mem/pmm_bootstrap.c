@@ -230,7 +230,7 @@ extern void			*pmm_bootstrap_page_get(mem_type_t mem_type)
 	return (NULL);
 }
 
-extern void			pmm_page_free(void *addr)
+extern void			pmm_bootstrap_page_free(void *addr)
 {
 	if ((uint32_t)addr == NULL || (uint32_t)addr >= 0xFFFFC000) {
 		// error addr is invalid

@@ -96,8 +96,7 @@ extern void		*vmalloc(size_t size)
 	// printk("%d %d\n", nb_pages, sizeof(t_vmalloc_block));
 
 	// printk("%d\n", nb_pages);
-
-	if (vmalloc_index < VMALLOC_NB_ENTRIES) {
+	if (vmalloc_index < VMALLOC_NB_ENTRIES - 1) {
 		current_block = &(vmalloc_map[vmalloc_index]);
 		if (current_block->nb_pages >= nb_pages && !current_block->effective_size) {
 			//current block is large enough AND free
@@ -105,14 +104,14 @@ extern void		*vmalloc(size_t size)
 
 			vmalloc_block_set(current_block, nb_pages, current_block->prev_nb_pages, size);
 			vmalloc_index += nb_pages;
-			if (vmalloc_index < VMALLOC_NB_ENTRIES) {
+			if (vmalloc_index < VMALLOC_NB_ENTRIES - 1) {
 				//not yet at the end of vmalloc map, set next block as free
 				vmalloc_block_set(&(vmalloc_map[vmalloc_index]), tmp - nb_pages, nb_pages, 0);
 			}
 
 			vaddr = (uint32_t)addr_from_index(vmalloc_index - nb_pages);
 			for (size_t j = 0; j < nb_pages; j++) {
-				current_block += j * sizeof(t_vmalloc_block);
+				current_block = (t_vmalloc_block *) ((uint32_t)current_block + sizeof(t_vmalloc_block));
 				phys_page_addr = (uint32_t *)pmm_page_get(MEM_MEDIUM);
 				
 				if (!phys_page_addr) {
@@ -140,14 +139,13 @@ extern void		*vmalloc(size_t size)
 
 			vmalloc_block_set(current_block, nb_pages, current_block->prev_nb_pages, size);
 			i += nb_pages;
-			if (i < VMALLOC_NB_ENTRIES && nb_pages < tmp) {
+			if (i < VMALLOC_NB_ENTRIES - 1 && nb_pages < tmp) {
 				//not yet at the end of vmalloc map, set next block as free
 				vmalloc_block_set(&(vmalloc_map[i]), tmp - nb_pages, nb_pages, 0);
 			}
 
 			vaddr = (uint32_t)addr_from_index(i - nb_pages);
 			for (size_t j = 0; j < nb_pages; j++) {
-				current_block += j * sizeof(t_vmalloc_block);
 				phys_page_addr = (uint32_t *)pmm_page_get(MEM_MEDIUM);
 				
 				if (!phys_page_addr) {
@@ -160,6 +158,7 @@ extern void		*vmalloc(size_t size)
 					return (NULL);
 				}
 				current_block->physical_addr = phys_page_addr;
+				current_block = (t_vmalloc_block *) ((uint32_t)current_block + sizeof(t_vmalloc_block));
 			}
 
 			return ((void *)vaddr);
@@ -190,7 +189,10 @@ extern void			vfree(void *vaddr)
 	//free each physical page of the block
 	t_vmalloc_block		*current_block;
 	for (size_t i = 0; i < block->nb_pages; i++) {
-		current_block = block + (i * sizeof(t_vmalloc_block));
+		current_block = (t_vmalloc_block *)((uint32_t)block + (i * sizeof(t_vmalloc_block)));
+		if (current_block->physical_addr == 0) {
+			printk(KERN_WARNING "%0#x\n", (uint32_t)current_block->physical_addr);
+		}
 		pmm_page_free(current_block->physical_addr);
 		current_block->physical_addr = NULL;
 	}
@@ -264,13 +266,14 @@ extern void			test_vmalloc()
 	printk("defrag test: %u(effective size 0=free) %u(nb_pages) %u(prev block nb_pages) %u(phys addr 0=free)\n",
 			b->effective_size, b->nb_pages, b->prev_nb_pages, b->physical_addr);
 
-	void *tmp;
+	 void *tmp;
 	for (size_t i = 0; i < 2200; i++) {
 		tmp = vmalloc(65535);
 		vfree(tmp);
 	}
 	for (size_t i = 0; i < VMALLOC_NB_ENTRIES; i++) {
 		tmp = vmalloc(1);
+		//tmp = 0;
 		vfree(tmp);
 	}
 	for (size_t i = 0; i < VMALLOC_NB_ENTRIES; i++) {

@@ -57,13 +57,12 @@ extern int			pmm_init(void);
 	return null pointer if did't find any page available
 */
 extern void			*pmm_bootstrap_page_get(mem_type_t mem_type);
-extern void			*pmm_page_get(mem_type_t mem_type);
 
 /*
 	O(1)
 	addr must be aligned with PAGE_SIZE
 */
-extern void			pmm_page_free(void *addr);
+extern void			pmm_bootstrap_page_free(void *addr);
 
 
 /*				pmm final api	v2				*/
@@ -81,14 +80,25 @@ struct pmm_stack_segment {
 	struct pmm_stack_unit	pmm_sseg[PMM_STACK_SEGMENT_SIZE];
 };
 
-typedef struct pmm_stack_unit		t_pmm_stack;
-typedef struct pmm_stack_segment	t_pmm_stack_segment;
-typedef struct pmm_stack_unit		t_pmm_stack_unit;
+typedef struct pmm_stack_unit		pmm_stack_t;
+typedef struct pmm_stack_segment	pmm_stack_segment_t;
+typedef struct pmm_stack_unit		pmm_stack_unit_t;
 
-extern int				pmm_final_init(unsigned char *pbitmap);
-extern void				pmm_unit_print(t_pmm_stack_unit *unit, void *args);
-extern void				pmm_unit_foreach(void (*f)(t_pmm_stack_unit *u, void *args), void *params);
+extern int				pmm_init_final(unsigned char *pbitmap);
+extern void				pmm_unit_print(pmm_stack_unit_t *unit, void *args);
+extern void				pmm_unit_foreach(void (*f)(pmm_stack_unit_t *u, void *args), void *params);
+extern void				pmm_unit_foreach_rev(void (*f)(pmm_stack_unit_t *u, void *args), void *params);
+extern pmm_stack_unit_t	*pmm_unit_addr_find(void *addr);
+extern uint32_t			pmm_size_get(void *paddr);
 
+extern void				*pmm_final_page_get(mem_type_t mem_type);
+extern void				*pmm_pages_get_final(mem_type_t mem_type);
+
+extern void			pmm_final_page_free(void *addr);
+
+//wrapper to switch from bootstrap manager to final
+extern void			*pmm_page_get(mem_type_t mem_type);
+extern void			pmm_page_free(void *addr);
 
 
 /*				VMALLOC				*/

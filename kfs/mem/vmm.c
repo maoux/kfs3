@@ -76,7 +76,7 @@ extern int			vmm_alloc_page(pt_entry *e)
 
 extern void			vmm_free_page(pt_entry *e)
 {
-	pmm_page_free((void *) PTE_FRAME_GET (e));
+	pmm_bootstrap_page_free((void *) PTE_FRAME_GET (e));
 	pte_attr_del(e, PTE_PRESENT);
 }
 
