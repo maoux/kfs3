@@ -27,7 +27,7 @@ enum mem_type_e {
 
 # define MEM_LOW_START			0x0
 # define MEM_LOW_END			0xfffff		// 1Mb - 1
-# define MEM_MEDIUM_START		0x100000	// 1Mb 
+# define MEM_MEDIUM_START		0x100000	// 1Mb -> standard memory, if MEM_MEDIUM is requested you might get MEM_LOW returned, to be fixed in further update
 # define MEM_MEDIUM_END			0xffbfffff	// 4Gb - 4Mb - 1
 
 # define ZONE_DMA_START			0x0
@@ -92,13 +92,20 @@ extern pmm_stack_unit_t	*pmm_unit_addr_find(void *addr);
 extern uint32_t			pmm_size_get(void *paddr);
 
 extern void				*pmm_final_page_get(mem_type_t mem_type);
-extern void				*pmm_pages_get_final(mem_type_t mem_type);
+extern void				*pmm_pages_get(mem_type_t mem_type, size_t nb_pages);
 
-extern void			pmm_final_page_free(void *addr);
+extern void				pmm_final_page_free(void *addr);
+extern void				pmm_pages_free(void *addr);
+
+
 
 //wrapper to switch from bootstrap manager to final
 extern void			*pmm_page_get(mem_type_t mem_type);
 extern void			pmm_page_free(void *addr);
+
+//test pmm
+extern void		pmm_test_small(void);
+
 
 
 /*				VMALLOC				*/

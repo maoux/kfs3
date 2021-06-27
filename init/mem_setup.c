@@ -43,5 +43,7 @@ extern int		mm_init(void *page_directory_vaddr)
 	//pmm final
 	//kmalloc
 
+	pmm_test_small();
+
 	return (0);
 }
