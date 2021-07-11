@@ -45,7 +45,7 @@ static int			index_from_addr(void *vaddr)
 }
 
 /*
-	return value on error
+	return value > 1 on error
 	return 0 on success
 	map enough memory in virtual address space to store a complete map of the 128Mb memory
 	reserved for vmalloc api
@@ -59,11 +59,9 @@ extern int			vmalloc_init(void)
 	for (size_t i = 0; i < VMALLOC_NB_PAGES; i++) {
 		phys_page_addr = (uint32_t *)pmm_page_get(MEM_MEDIUM);
 		if (!phys_page_addr) {
-			//TODO error
 			return (1);
 		}
 		if (vmm_map_page(phys_page_addr, (void *)((uint32_t)vmalloc_map) + (i * PAGE_SIZE), 0)) {
-			//TODO error
 			return (1);
 		}
 	}
@@ -115,12 +113,10 @@ extern void		*vmalloc(size_t size)
 				phys_page_addr = (uint32_t *)pmm_page_get(MEM_MEDIUM);
 				
 				if (!phys_page_addr) {
-					//TODO error
 					return (NULL);
 				}
 
 				if (vmm_map_page(phys_page_addr, (void *)(vaddr + (j * PAGE_SIZE)), 0)) {
-					//TODO error
 					return (NULL);
 				}
 				//printk("%#x %u\n", (uint32_t)current_block, (uint32_t)current_block);

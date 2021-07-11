@@ -76,7 +76,7 @@ extern int			vmm_alloc_page(pt_entry *e)
 
 extern void			vmm_free_page(pt_entry *e)
 {
-	pmm_bootstrap_page_free((void *) PTE_FRAME_GET (e));
+	pmm_page_free((void *) PTE_FRAME_GET (e));
 	pte_attr_del(e, PTE_PRESENT);
 }
 
@@ -103,6 +103,7 @@ extern int			vmm_map_page(void *paddr, void *vaddr, uint32_t attr)
 	if (!PDE_IS_PRESENT(*pde)) {
 		t_page_table *new_table = (t_page_table *) pmm_page_get(MEM_MEDIUM);
 		if (!new_table) {
+			panic("System could not get anymore physical memory inside virtual memory manager\n");
 			return (1);
 		}
 
@@ -130,6 +131,7 @@ extern int			vmm_map_page(void *paddr, void *vaddr, uint32_t attr)
 extern int		vmm_unmap_page(void *vaddr)
 {
 	if ((uint32_t)vaddr % PAGE_SIZE) {
+		printk(KERN_ERR "Trying to unmap a missaligned address %#0x\n", vaddr);
 		return (1);
 	}
 	
@@ -138,6 +140,7 @@ extern int		vmm_unmap_page(void *vaddr)
 	pd_entry			*pde = &page_directory->pd_entries[PDE_INDEX_GET ((uint32_t)vaddr)];
 
 	if (!PDE_IS_PRESENT (*pde)) {
+		printk(KERN_ERR "Trying to unmap a page in an already zeroed page directory entry\n");
 		return (2);
 	}
 
@@ -145,6 +148,7 @@ extern int		vmm_unmap_page(void *vaddr)
 	pt_entry			*pte = &virtual_table->pt_entries[PTE_INDEX_GET ((uint32_t)vaddr)];
 
 	if (!PTE_IS_PRESENT (*pte)) {
+		printk(KERN_ERR "Trying to unmap an already zeroed page table entry\n");
 		return (3);
 	}
 

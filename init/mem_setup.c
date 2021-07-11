@@ -10,14 +10,19 @@
 */
 extern int		mm_init(void *page_directory_vaddr)
 {
-	if (pmm_init() == 0) {
+	int			tmp;
+
+	if ((tmp = pmm_init()) == 0) {
 		printk(KERN_INFO "Physical Memory (Bootstrap) Manager Setup done\n");
 	} else {
 		printk(KERN_CRIT "Physical Memory (Bootstrap) Manager Setup failed\n");
+		if (tmp == 1) {
+			panic("System couldn't find memory map, boot aborted\n");
+		}
 		return (1);
 	}
 
-	if (vmm_init(page_directory_vaddr) == 0) {
+	if ((tmp = vmm_init(page_directory_vaddr)) == 0) {
 		printk(KERN_INFO "Virtual Memory Manager Setup done\n");
 	} else {
 		printk(KERN_CRIT "Virtual Memory Manager Setup failed\n");
@@ -31,16 +36,19 @@ extern int		mm_init(void *page_directory_vaddr)
 		return (1);
 	}
 
-	if (pmm_init_final(pmm_bootstrap_bitmap_addr_get()) == 0) {
+	if ((tmp = pmm_init_final(pmm_bootstrap_bitmap_addr_get())) == 0) {
 		printk(KERN_INFO "Physical Memory (Final) Manager Setup done\n");
 	} else {
 		printk(KERN_CRIT "Physical Memory (Final) Manager Setup failed\n");
+		if (tmp == 1) {
+			panic("System could not find any valid memory to setup final physical memory manager, boot aborted\n");
+		}
+		if (tmp == 2) {
+			panic("System could not get enough physical memory to store the physical memory manager's data structure, boot aborted\n");
+		}
 		return (1);
 	}
 
-//	pmm_unit_foreach(&pmm_unit_print, NULL);
-
-	//pmm final
 	//kmalloc
 
 	pmm_test_small();

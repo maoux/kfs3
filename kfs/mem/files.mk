@@ -3,7 +3,9 @@ SRCS_MEM_C :=	pmm_bootstrap.c\
 				pmm.c\
 				pde.c\
 				pte.c\
-				vmalloc.c
+				vmalloc.c\
+				panic.c\
+				kmalloc.c
 
 SRCS_MEM_A :=
 

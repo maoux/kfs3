@@ -133,6 +133,9 @@ extern void			pmm_page_free(void *addr)
 	return ((*physical_free_func)(addr));
 }
 
+//return 0 upon success
+//return 1 if no memory to store data structure was found at all
+//return 2 if it couldn't find enough memory to store the entire bitmap
 extern int			pmm_init_final(unsigned char *pbitmap)
 {
 	pmm_stack_segment_t		*current_segment;
@@ -145,7 +148,6 @@ extern int			pmm_init_final(unsigned char *pbitmap)
 	// alloc first segment of the stack
 	current_segment = pmm_alloc_segment();
 	if (current_segment == NULL) {
-		//todo error
 		return (1);
 	}
 	for (int index = 0; index < PMM_STACK_SEGMENT_SIZE; index++) {
@@ -173,8 +175,7 @@ extern int			pmm_init_final(unsigned char *pbitmap)
 						pmm_stack_segment_t		*tmp_segment;
 						tmp_segment = pmm_alloc_segment();
 						if (tmp_segment == NULL) {
-							//todo error
-							return (1);
+							return (2);
 						}
 						for (int index = 0; index < PMM_STACK_SEGMENT_SIZE; index++) {
 							pmm_segment_unit_set(tmp_segment, index, 0, NULL, NULL, NULL);
@@ -299,7 +300,7 @@ extern void			*pmm_final_page_get(mem_type_t mem_type)
 	if (mem_type == MEM_LOW) {
 		pmm_stack_unit_t	*unit = (pmm_stack_unit_t *)pmm_stack;
 		if (!unit) {
-			//todo error no more physical memory
+			panic("Physical memory manager corrupted\n");
 			return (NULL);
 		}
 
@@ -318,7 +319,7 @@ extern void			*pmm_final_page_get(mem_type_t mem_type)
 	} else {
 		pmm_stack_segment_t	*segment = pmm_get_last_segment();
 		if (!segment) {
-			//todo error no more physical memory
+			panic("Physical memory manager corrupted\n");
 			return (NULL);
 		}
 		pmm_stack_unit_t	*unit = (pmm_stack_unit_t *)&(segment->pmm_sseg[current_unit_index]);
@@ -363,7 +364,7 @@ extern void			*pmm_final_page_get(mem_type_t mem_type)
 			unit = prev;
 		} while (unit);
 
-		//todo error out of physical memory
+		panic("No more physical memory available\n");
 		return (NULL);
 	}
 	return (NULL);
@@ -372,7 +373,7 @@ extern void			*pmm_final_page_get(mem_type_t mem_type)
 extern void			pmm_final_page_free(void *addr)
 {
 	if ((uint32_t)addr % PAGE_SIZE || addr == NULL) {
-		//todo error
+		printk(KERN_ERR "Trying to free physical misaligned memory %#0u\n", (uint32_t)addr);
 		return ;
 	}
 
@@ -385,7 +386,7 @@ extern void			pmm_final_page_free(void *addr)
 
 		tmp_segment = pmm_alloc_segment();
 		if (tmp_segment == NULL) {
-			//todo error
+			panic("Physical memory manager corrupted\n");
 			return ;
 		}
 		for (int index = 0; index < PMM_STACK_SEGMENT_SIZE; index++) {
@@ -438,7 +439,7 @@ extern void			*pmm_pages_get(mem_type_t mem_type, size_t nb_pages)
 				//pmm_allocated_list is empty
 				pmm_allocated_list = (pmm_stack_t *)pmm_alloc_segment();
 				if (pmm_allocated_list == NULL) {
-					//todo error vmalloc failed
+					panic("System ran out of virtual memory in vmalloc pool, leading to pmm curruption\n");
 					return (paddr);
 				}
 				for (int index = 0; index < PMM_STACK_SEGMENT_SIZE; index++) {
@@ -452,7 +453,7 @@ extern void			*pmm_pages_get(mem_type_t mem_type, size_t nb_pages)
 			} else if (current_allocated_index == PMM_STACK_SEGMENT_SIZE - 1) {
 				pmm_stack_segment_t		*seg = pmm_alloc_segment();
 				if (seg == NULL) {
-					//todo error vmalloc failed
+					panic("System ran out of virtual memory in vmalloc pool, leading to pmm curruption\n");
 					return (paddr);
 				}
 				for (int index = 0; index < PMM_STACK_SEGMENT_SIZE; index++) {
@@ -496,7 +497,7 @@ extern void			*pmm_pages_get(mem_type_t mem_type, size_t nb_pages)
 
 		ucurrent = ucurrent->next;
 	}
-	//todo error out of physical memory
+	printk(KERN_CRIT "No enough physical memory available to allocate %d Bytes\n", nb_pages * PAGE_SIZE);
 	return (NULL);
 }
 
@@ -529,7 +530,7 @@ extern void			pmm_pages_free(void *addr)
 
 				tmp_segment = pmm_alloc_segment();
 				if (tmp_segment == NULL) {
-					//todo error
+					panic("No more physical memory\n");
 					return ;
 				}
 				//zeros the new segment

@@ -225,8 +225,7 @@ extern void			*pmm_bootstrap_page_get(mem_type_t mem_type)
 			return ((void *)addr);
 		}
 	}
-	// return null pointer
-	printk(KERN_EMERG "System out of physical memory\n");
+	panic("System out of physical memory\n");
 	return (NULL);
 }
 

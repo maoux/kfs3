@@ -29,4 +29,6 @@ extern int			mm_init(void *page_directory_vaddr);
 extern void			*vmalloc(size_t size);
 extern void			vfree(void *vaddr);
 
+extern void			panic(const char *msg_error);
+
 #endif
