@@ -3,8 +3,13 @@
 
 # include <stddef.h>
 
-
 # define NULL 0
+
+typedef enum bool_e bool;
+enum bool_e {
+	FALSE = 0,
+	TRUE = 1
+};
 
 # define KERN_NONE		"8"
 # define KERN_EMERG		"7"

@@ -5,7 +5,9 @@ SRCS_MEM_C :=	pmm_bootstrap.c\
 				pte.c\
 				vmalloc.c\
 				panic.c\
-				kmalloc.c
+				kmalloc.c\
+				cache.c\
+				mem_test.c
 
 SRCS_MEM_A :=
 

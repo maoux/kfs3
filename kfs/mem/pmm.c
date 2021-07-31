@@ -565,6 +565,6 @@ extern void		pmm_test_small(void)
 {
 	uint32_t	*test = (uint32_t *)pmm_pages_get(MEM_MEDIUM, 10);
 
-	printk(KERN_WARNING "physical addr %0#x -> size %d\n", (uint32_t)test, pmm_size_get((void *)test));
+	printk(KERN_WARNING "TESTING VMALLOC physical addr %0#x -> size %d\n", (uint32_t)test, pmm_size_get((void *)test));
 	pmm_pages_free((void *)test);
 }

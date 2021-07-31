@@ -1,8 +1,8 @@
 #ifndef __MEM_H__
 # define __MEM_H__
 
+# include <kfs/kernel.h>
 # include <stdint.h>
-# include <stddef.h>
 
 # define KERNEL_SPACE_V_ADDR	0xC0000000 //kernel virtual memory space offset
 # define KERNEL_SIZE			0x400000 //4Mb ( 1 page table )
@@ -142,6 +142,98 @@ extern void			*vzmalloc(size_t size);
 extern void			vfree(void *vaddr);
 extern uint32_t		vmalloc_get_size(void *vaddr);
 extern uint32_t		vmalloc_get_size_physical(void *vaddr);
-extern void			test_vmalloc();
+
+/*		KMALLOC			*/
+
+# define SET_BIT(bitmap, n) (bitmap | (1 << n)) //set
+# define CLR_BIT(bitmap, n) (bitmap & ~(1 << n)) //clear
+# define VRF_BIT(bitmap, n) ((bitmap >> n) & 1) //verify
+
+# define KMALLOC_META_DATA_ADDR			0xC9480000 //0xC9080000 end of vmalloc addr space + 4Mb security space
+// it leave 28 Mb space to write our kmalloc data structures
+// being able to map up to
+
+// 805306368 bytes
+// => 196608 pages (divided by 3)
+// => 65536 pages per block size (multiplied by (PAGE_SIZE / block size))
+// => 1048576 entries for small block 255 bytes
+// => 524288 entries for medium block 511 bytes
+// => 262144 entries for large block 1023 bytes
+// ?Should study factually the best repartition instead of a linear one?
+# define KMALLOC_ADDR_SPACE_START	0xCB080000
+# define KMALLOC_ADDR_SPACE_END		0xFB080000
+
+# define KMALLOC_ADDR_SPACE_LARGE_START		0xFB080000
+# define KMALLOC_ADDR_SPACE_LARGE_END		0xFB080000
+
+typedef enum cache_state	cache_state_t;
+enum cache_state {
+	FREE,
+	PARTIAL,
+	FULL
+};
+
+// this is to be used in case cache is larger than a single page
+typedef enum cache_type		cache_type_t;
+enum cache_type {
+	SMALL,
+	LARGE
+};
+
+/*
+	state		indicate if the cache is totally free, partially free or full
+	block_size	indicate the size of each block contained by the current cache
+	bitmap		representation of each block' state in the cache, 0 is free, 1 is used
+	next		next cache in the linked list, can be NULL
+	prev		previous cache in the linked list, can be NULL
+*/
+typedef struct cache	cache_t;
+typedef struct cache	cache_list_t;
+struct cache {
+	cache_state_t	state;		// 4B ?
+	cache_type_t	type;		// 4B ?
+	size_t			block_size;	// 2B
+	uint16_t		bitmap;		// 2B
+	uint32_t		options;	// 4B
+	void			*paddr;		// 4B
+	void			*base_vaddr;// 4B
+	cache_t			*next;		// 4B
+	cache_t			*prev;		// 4B
+}__attribute__((packed));
+//options bit |   30   |  2  |
+//				  N/A	  T
+//T = mem type, 00 for kernel memory, 11 for user memory, 01 N/A, 10 N/A
+
+extern int			mem_cache_init();
+extern cache_t		*mem_cache_create();
+extern void			mem_cache_delete(cache_t *cache);
+extern void			*mem_cache_block_get(cache_t *cache, bool set); //get first free block and send its corresponding addr, upd cache state
+extern cache_t		*mem_cache_find_addr(void *vaddr); //find cache corresponding to vaddr
+extern void			mem_cache_block_free(cache_t *cache, void *vaddr); //free given vaddr in given cache, upd cache state
+extern cache_t		*mem_cache_find_available(size_t size);
+
+
+//TODO We could imagine a wide range of cache sizes for different use, those are already big caches
+//  , we could try values as 32, 64, 128, 256 to optimize smaller datastructures allocations
+# define SMALL_BLOCK_SIZE	256		//16 blocks per cache assuming cache is one page large
+# define MEDIUM_BLOCK_SIZE	512		//8  blocks per cache assuming cache is one page large
+# define LARGE_BLOCK_SIZE	1024	//4  blocks per cache assuming cache is one page large
+
+extern void			*kmalloc(size_t size/*, uint32_t opt*/);
+extern void			kfree(void *addr);
+extern size_t		kmalloc_size_get(void *addr);
 
 #endif
+
+
+// test functions
+
+extern void			test_vmalloc();
+
+extern void		kmalloc_test_simple();
+extern void		kmalloc_test_leak_small();
+extern void		kmalloc_test_no_leak_small();
+extern void		kmalloc_test_leak_medium();
+extern void		kmalloc_test_no_leak_medium();
+extern void		kmalloc_test_leak_large();
+extern void		kmalloc_test_no_leak_large();

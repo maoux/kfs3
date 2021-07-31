@@ -32,7 +32,7 @@ extern int		mm_init(void *page_directory_vaddr)
 	if (vmalloc_init() == 0) {
 		printk(KERN_INFO "vmalloc Setup done\n");
 	} else {
-		printk(KERN_CRIT "vmalloc Setup failed\n");
+		panic("vmalloc Setup failed\n");
 		return (1);
 	}
 
@@ -49,7 +49,15 @@ extern int		mm_init(void *page_directory_vaddr)
 		return (1);
 	}
 
-	//kmalloc
+	if ((tmp = mem_cache_init()) == 0) {
+		printk(KERN_INFO "Heap setup done, kmalloc ready\n");
+	} else {
+		if (tmp == 1) {
+			panic("System could not find any valid memory to setup kernel heap, boot aborted\n");
+		} else if (tmp == 2) {
+			panic("Couldn't map physical to virtual address, boot aborted\n");
+		}
+	}
 
 	pmm_test_small();
 
