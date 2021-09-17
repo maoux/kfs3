@@ -26,6 +26,7 @@
 */
 
 cache_list_t		*cache_list = NULL;
+cache_list_t		*large_cache_list = NULL;
 
 /*
 	map paddr to vaddr, vaddr is the cache data structure mapping the actual base_addr space of PAGE_SIZE
@@ -172,6 +173,14 @@ extern cache_t		*mem_cache_find_available(size_t size)
 	cache_t			*cache = NULL;
 
 	if (size >= LARGE_BLOCK_SIZE) {
+		tmp_cache_list = large_cache_list;
+		while (tmp_cache_list) {
+			cache = (cache_t *)tmp_cache_list;
+			if (cache->state == FREE && cache->block_size > size) {
+				return (cache);
+			}
+			tmp_cache_list = (cache_list_t *)cache->next;
+		}
 		return (NULL);
 	}else if (size < SMALL_BLOCK_SIZE) {
 		while (tmp_cache_list) {
@@ -207,6 +216,16 @@ extern cache_t		*mem_cache_find_addr(void *vaddr)
 	cache_list_t	*tmp_cache_list = cache_list;
 	cache_t			*cache = NULL;
 
+	//normal block
+	while (tmp_cache_list) {
+		cache = (cache_t *)tmp_cache_list;
+		if ((uint32_t)vaddr >= (uint32_t)(cache->base_vaddr) && (uint32_t)vaddr < ((uint32_t)(cache->base_vaddr) + PAGE_SIZE)) {
+			return (cache);
+		}
+		tmp_cache_list = (cache_list_t *)cache->next;
+	}
+	//large blocks
+	tmp_cache_list = large_cache_list;
 	while (tmp_cache_list) {
 		cache = (cache_t *)tmp_cache_list;
 		if ((uint32_t)vaddr >= (uint32_t)(cache->base_vaddr) && (uint32_t)vaddr < ((uint32_t)(cache->base_vaddr) + PAGE_SIZE)) {
@@ -215,6 +234,83 @@ extern cache_t		*mem_cache_find_addr(void *vaddr)
 		tmp_cache_list = (cache_list_t *)cache->next;
 	}
 	return (NULL);
+}
+
+extern void			*mem_cache_large_block_get_addr(cache_t *cache)
+{
+	if (cache) {
+		cache->state = FULL;
+		return (cache->base_vaddr);
+	}
+	return (NULL);
+}
+
+extern void			mem_cache_large_block_free(cache_t *cache)
+{
+	cache->state = FREE;
+}
+
+//allocate a block of size to be used directly, set to FULL
+extern cache_t		*mem_cache_large_block_alloc(size_t size)
+{
+	cache_list_t	*tmp_cache_list = large_cache_list;
+	cache_t			*cache = NULL;
+	void			*paddr;
+	void			*base_vaddr = (void *)KMALLOC_ADDR_SPACE_LARGE_START;
+
+	cache = (cache_t *)kmalloc(sizeof(cache_t));
+	if (!cache) {
+		return (NULL);
+	}
+	cache->bitmap = 0;
+	cache->block_size = size;
+	cache->options = 0;
+	cache->type = LARGE;
+	cache->state = FULL;
+	cache->next = NULL;
+	cache->paddr = NULL;
+
+	if (tmp_cache_list) {
+		while (tmp_cache_list->next) {
+			base_vaddr += ((cache_t *)tmp_cache_list)->block_size;
+			tmp_cache_list = tmp_cache_list->next;
+		}
+		if ((uint32_t)base_vaddr + size >= KMALLOC_ADDR_SPACE_LARGE_END) {
+			//space remaining is too small to contain size variable
+			kfree(cache);
+			return (NULL);
+		}
+		tmp_cache_list->next = cache;
+		cache->prev = tmp_cache_list;
+	} else {
+		//empty list
+		cache->prev = NULL;
+		large_cache_list = (cache_list_t *)cache;
+	}
+	cache->base_vaddr = base_vaddr;
+	for (; (uint32_t)base_vaddr <= (uint32_t)base_vaddr + size; base_vaddr += PAGE_SIZE) {
+		if (!(paddr = pmm_page_get(MEM_MEDIUM))) {
+			//no more space available
+			if (tmp_cache_list->next) {
+				tmp_cache_list->next = NULL;
+			} else {
+				large_cache_list = NULL;
+			}
+			kfree(cache);
+			return (NULL);
+		}
+		if (vmm_map_page(paddr, (void *)base_vaddr, 0) != 0) {
+			//mapping issue
+			if (tmp_cache_list->next) {
+				tmp_cache_list->next = NULL;
+			} else {
+				large_cache_list = NULL;
+			}
+			kfree(cache);
+			return (NULL);
+		}
+	}
+	return (cache);
 }
 
 //get first free block in the cache's bitmap passed in arguments

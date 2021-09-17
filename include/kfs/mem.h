@@ -163,8 +163,8 @@ extern uint32_t		vmalloc_get_size_physical(void *vaddr);
 # define KMALLOC_ADDR_SPACE_START	0xCB080000
 # define KMALLOC_ADDR_SPACE_END		0xFB080000
 
-# define KMALLOC_ADDR_SPACE_LARGE_START		0xFB080000
-# define KMALLOC_ADDR_SPACE_LARGE_END		0xFB080000
+# define KMALLOC_ADDR_SPACE_LARGE_START		0xFBA80000 // KMALLOC_ADDR_SPACE_END + 10Mb
+# define KMALLOC_ADDR_SPACE_LARGE_END		0xFF680000 // 60 Mb for large malloc, must be annalysed and reworked
 
 typedef enum cache_state	cache_state_t;
 enum cache_state {
@@ -211,6 +211,9 @@ extern void			*mem_cache_block_get(cache_t *cache, bool set); //get first free b
 extern cache_t		*mem_cache_find_addr(void *vaddr); //find cache corresponding to vaddr
 extern void			mem_cache_block_free(cache_t *cache, void *vaddr); //free given vaddr in given cache, upd cache state
 extern cache_t		*mem_cache_find_available(size_t size);
+extern void			*mem_cache_large_block_get_addr(cache_t *cache);
+extern cache_t		*mem_cache_large_block_alloc(size_t size);
+extern void			mem_cache_large_block_free(cache_t *cache);
 
 
 //TODO We could imagine a wide range of cache sizes for different use, those are already big caches
@@ -228,7 +231,7 @@ extern size_t		kmalloc_size_get(void *addr);
 
 // test functions
 
-extern void			test_vmalloc();
+extern void		test_vmalloc();
 
 extern void		kmalloc_test_simple();
 extern void		kmalloc_test_leak_small();

@@ -3,14 +3,27 @@
 
 extern void		kfree(void *vaddr)
 {
-	if (vaddr) {
-		cache_t		*cache = mem_cache_find_addr(vaddr);
+	cache_t		*cache = mem_cache_find_addr(vaddr);
+	if (!cache) {
+		return ;
+	}
+	if ((uint32_t)vaddr >= KMALLOC_ADDR_SPACE_START && (uint32_t)vaddr <= KMALLOC_ADDR_SPACE_END) {
 		mem_cache_block_free(cache, vaddr);
+	} else if ((uint32_t)vaddr >= KMALLOC_ADDR_SPACE_LARGE_START && (uint32_t)vaddr <= KMALLOC_ADDR_SPACE_LARGE_END) {
+		mem_cache_large_block_free(cache);
 	}
 }
 
 static void		*kmalloc_large(size_t size)
 {
+	cache_t		*cache = (cache_t *)mem_cache_find_available(size);
+	if (cache) {
+		return ((void *)mem_cache_large_block_get_addr(cache));
+	}
+	cache = (cache_t *)mem_cache_large_block_alloc(size);
+	if (cache) {
+		return ((void *)cache->base_vaddr);
+	}
 	return (NULL);
 }
 
