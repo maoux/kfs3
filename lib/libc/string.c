@@ -152,6 +152,7 @@ extern char		*strcpy(char *dest, const char *src)
 		*(dest + i) = *(src + i);
 		i++;
 	}
+	*(dest + i) = '\0';
 	return (dest);
 }
 
@@ -163,6 +164,7 @@ extern char		*strncpy(char *dest, const char *src, size_t n)
 		*(dest + i) = *(src + i);
 		i++;
 	}
+	*(dest + i) = '\0';
 	return (dest);
 }
 

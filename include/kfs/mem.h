@@ -214,6 +214,7 @@ extern cache_t		*mem_cache_find_available(size_t size);
 extern void			*mem_cache_large_block_get_addr(cache_t *cache);
 extern cache_t		*mem_cache_large_block_alloc(size_t size);
 extern void			mem_cache_large_block_free(cache_t *cache);
+extern size_t		kmalloc_get_size(void *vaddr);
 
 
 //TODO We could imagine a wide range of cache sizes for different use, those are already big caches
@@ -240,3 +241,4 @@ extern void		kmalloc_test_leak_medium();
 extern void		kmalloc_test_no_leak_medium();
 extern void		kmalloc_test_leak_large();
 extern void		kmalloc_test_no_leak_large();
+extern void		kmalloc_test_large(void);

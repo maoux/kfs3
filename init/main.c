@@ -47,14 +47,16 @@ extern void		kmain(uint32_t magic, uint32_t *meminfo_offset, void *page_director
 	}
 	if (debug) {
 	//	pmm_unit_foreach(&pmm_unit_print, NULL);
-	//	test_vmalloc();
+		test_vmalloc();
 	//	pmm_unit_foreach(&pmm_unit_print, NULL);
+		pmm_test_small();
 		kmalloc_test_no_leak_small();
 		kmalloc_test_leak_small();
 		kmalloc_test_no_leak_medium();
 		kmalloc_test_leak_medium();
 		kmalloc_test_no_leak_large();
 		kmalloc_test_leak_large();
+		kmalloc_test_large();
 	}
 	shell();
 }
