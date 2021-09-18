@@ -275,10 +275,10 @@ extern void		buffer_scroll_down(void)
 extern void		text_mode_intro_print(void)
 {
 	textcolor_set(VGA_COLOR_BLACK, VGA_COLOR_BLUE);
-	printk(	KERN_NONE	"\t\t\t\t _    __    ___\n" 
-						"\t\t\t\t| |__/ _|__|_  )\n"
-						"\t\t\t\t| / /  _ (_</ /\n"
-						"\t\t\t\t|_\\_\\_| /__/___|\n\n");
+	printk(	KERN_NONE	"\t\t\t\t _    __    ____\n" 
+						"\t\t\t\t| |__/ _|__|__ /\n"
+						"\t\t\t\t| / /  _ (_<|_ \\\n"
+						"\t\t\t\t|_\\_\\_| /__/___/\n\n");
 	textcolor_set(VGA_COLOR_BLACK, VGA_COLOR_WHITE);
 }
 
