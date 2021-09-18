@@ -47,7 +47,7 @@ static uint8_t	print_log_prefix(char c)
 		putstring("LOG DEBUG: ");
 		return (1);
 	}
-	else if (c == *KERN_INFO) {
+	else if (c == *KERN_INFO) {\
 		putstring("LOG INFO: ");
 		return (1);
 	}

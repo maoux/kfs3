@@ -61,4 +61,3 @@ dkms.conf
 *.bin
 dest
 *tmp*
-*test*

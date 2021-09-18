@@ -58,8 +58,5 @@ extern int		mm_init(void *page_directory_vaddr)
 			panic("Couldn't map physical to virtual address, boot aborted\n");
 		}
 	}
-
-	pmm_test_small();
-
 	return (0);
 }

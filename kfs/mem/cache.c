@@ -288,7 +288,8 @@ extern cache_t		*mem_cache_large_block_alloc(size_t size)
 		large_cache_list = (cache_list_t *)cache;
 	}
 	cache->base_vaddr = base_vaddr;
-	for (; (uint32_t)base_vaddr <= (uint32_t)base_vaddr + size; base_vaddr += PAGE_SIZE) {
+	uint32_t	offset_vaddr = (uint32_t)base_vaddr + size;
+	for (; (uint32_t)base_vaddr <= offset_vaddr; base_vaddr += PAGE_SIZE) {
 		if (!(paddr = pmm_page_get(MEM_MEDIUM))) {
 			//no more space available
 			if (tmp_cache_list->next) {
