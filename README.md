@@ -1,21 +1,19 @@
-<h1>KFS2</h1>
+<h1>KFS3</h1>
 <p>Kernel from sratch project: my final 42 branch of project</p>
-<p>KFS2 is the second out of 10 project which leads you to create your very own kernel step by step</p>
+<p>KFS3 is the third out of 10 projects in a branch which leads you to create your very own kernel step by step</p>
 <p>Write a kernel from scratch for x86 32bits arch</p>
 
 <ul>
-  <li><p>Write a GDT with atleast 6 segments</p></li>
-  <li><ul>
-    <li><p>kernel code</p></li>
-    <li><p>kernel data</p></li>
-    <li><p>kernel stack</p></li>
-    <li><p>user code</p></li>
-    <li><p>user data</p></li>
-    <li><p>user stack</p></li>
-  </ul></li>
-  <li><p>Declare it to the bios at 0x0000800</p></li>
-  <li><p>Write a tool to print the stack</p></li>
-  <li><p>Write a very basic shell for future debugging</p></li>
+  <li><p>Activate paging and create memory api in the kernel</p></li>
+  <li><p>activate paging</p></li>
+  <li><p>initialize page directory</p></li>
+  <li><p>create first page table</p></li>
+  <li><p>theorically define kernel and user space</p></li>
+  <li><p>move kernel binary in virtual memory (at 0xC0000000)</p></li>
+  <li><p>functions to get physical pages</p></li>
+  <li><p>functions to map physical memory to virtual</p></li>
+  <li><p>functions to allocate virtual memory (kmalloc, kfree, get_size...)</p></li>
+  <li><p>Very very basic panic function</p></li>
 </ul>
 
 Host - Linux xubuntu - 64 bit
